@@ -18,7 +18,8 @@ setup(
         'base58',
         'requests',
         'uuid',
-        'sentry_sdk'
+        'sentry_sdk',
+        'cherrypy'
     ],
     packages         = find_packages('./src', exclude=[]),
     keywords         = ['did-endpoint'],
