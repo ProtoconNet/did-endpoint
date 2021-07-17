@@ -1,0 +1,8 @@
+bottle
+canister
+pyjwt
+ed25519
+base58
+requests
+uuid
+sentry_sdk
