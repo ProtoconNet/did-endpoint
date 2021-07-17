@@ -26,7 +26,7 @@ LOGI = LOG.info
 LOGD = LOG.debug
 LOGW = LOG.warning
 
-_url = DIDSAMPLE.ROLE['issuer']['domain'] + ":" + str(DIDSAMPLE.ROLE['issuer']['port'])
+_url = "http://"+ DIDSAMPLE.ROLE['issuer']['host'] + ":" + str(DIDSAMPLE.ROLE['issuer']['port'])
 
 app = bottle.Bottle()
 app.install(canister.Canister())

@@ -2,7 +2,7 @@
 import json
 import bottle
 import canister
-import cherrypy as cp
+import cherrypy
 from bottle import response, request, HTTPResponse
 import jwt
 from tools import did as DID
@@ -28,9 +28,9 @@ app.install(canister.Canister())
 _ISSUER_DID = DIDSAMPLE.ROLE['issuer']['did']
 _ISSUER_PRIVATEKEY = DIDSAMPLE.ROLE['issuer']['privateKey']
 _ISSUER_SECRET = DIDSAMPLE.ROLE['issuer']['secret']
-_ISSUER_DOMAIN = DIDSAMPLE.ROLE['issuer']['domain']
+_ISSUER_HOST = DIDSAMPLE.ROLE['issuer']['host']
 _ISSUER_PORT = DIDSAMPLE.ROLE['issuer']['port']
-_ISSUER_URL =  _ISSUER_DOMAIN + ":" + str(_ISSUER_PORT) 
+_ISSUER_URL =  "http://"+_ISSUER_HOST + ":" + str(_ISSUER_PORT) 
 _PLATFORM_SCHEME_URL = DIDSAMPLE.ROLE['platform']['urls']['scheme']
 _PLATFORM_RESOLVER_URL = DIDSAMPLE.ROLE['platform']['urls']['resolver']
 
@@ -124,11 +124,11 @@ def VCGet():
 
 if __name__ == "__main__":
     #app.run(host='0.0.0.0', port=_ISSUER_PORT)
-    cp.tree.graft(app, '/')
-    cp.config.update({
-        #'server.socket_host': _ISSUER_DOMAIN,
+    cherrypy.tree.graft(app, '/')
+    cherrypy.config.update({
+        'server.socket_host': '0.0.0.0',
         'server.socket_port': _ISSUER_PORT,
         'server.thread_pool': 30
     })
-    cp.server.start()
+    cherrypy.server.start()
 
