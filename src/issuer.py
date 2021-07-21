@@ -38,13 +38,10 @@ _PLATFORM_RESOLVER_URL = DIDSAMPLE.ROLE['platform']['urls']['resolver']
 def VCScheme():
     try:
         scheme = request.query['scheme']
-        schemeID = DID.getVCScheme(scheme)
+        schemeID = DIDSAMPLE.getVCScheme(scheme)
         schemeJSON = json.dumps(
-            {
-                "scheme": _PLATFORM_SCHEME_URL+"?id="+schemeID,
-                "VCPost": _ISSUER_URL+"/VC",
-                "VCGet" : _ISSUER_URL+"/VC"
-            })
+            DIDSAMPLE.getVCSchemeJSON(schemeID)
+        )
     except Exception as ex :
         LOGE(ex)
         response.status = 404
@@ -52,7 +49,6 @@ def VCScheme():
     LOGW("[Issuer] 1. VC Scheme 위치 알려주기 : %s" % (schemeJSON))
     raise HTTPResponse(schemeJSON, status=200, headers={})
 
-@app.post('/VC')
 def VCPost():
     try:
         vc = json.loads(request.body.read())
@@ -105,14 +101,13 @@ def response():
         LOGW("[Issuer] 3. DID AUTH - Verify : ERROR : 사인 검증 실패 : %s" % signature)
     raise HTTPResponse(json.dumps({"Response": challengeRet}), status=202, headers={})
 
-@app.get('/VC')
-def VCGet():
+def VCGet(vcType):
     try:
         jwt = DID.getVerifiedJWT(request, _ISSUER_SECRET)
         myUUID = jwt['uuid']
         credentialSubject = DID.getCredentialSubject(myUUID)
         # Todo : Change 'makeSampleVC' to 'makeVC'
-        vc = DIDSAMPLE.makeSampleVC(_ISSUER_DID, credentialSubject)
+        vc = DIDSAMPLE.makeSampleVC(_ISSUER_DID, vcType , credentialSubject)
         jws = DID.makeJWS(vc, _ISSUER_PRIVATEKEY)
         vc['proof']["jws"] = jws
     except Exception as ex :
@@ -121,6 +116,23 @@ def VCGet():
         return "Error"
     LOGW("[Issuer] 4. VC Issuance - %s" % vc)
     raise HTTPResponse(json.dumps({"Response":True, "VC": vc}), status=202, headers={})
+
+
+@app.post('/vc1')
+def postVC1():
+    return VCPost()
+
+@app.post('/vc2')
+def postVC2():
+    return VCPost()
+
+@app.get('/vc1')
+def getVC1():
+    return VCGet(DIDSAMPLE.getVCType('vc1'))
+
+@app.get('/vc2')
+def getVC2():
+    return VCGet(DIDSAMPLE.getVCType('vc2'))
 
 if __name__ == "__main__":
     #app.run(host='0.0.0.0', port=_ISSUER_PORT)

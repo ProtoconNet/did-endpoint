@@ -3,6 +3,7 @@ import datetime
 def getTime():
     return str(datetime.datetime.utcnow().isoformat())
 
+
 ROLE = {
     "issuer" :{
         "did" :"did:mtm:3rfrZgGZHXpjiGr1m3SKAbZSktYudfJCBsoJm4m1XUgp",
@@ -16,8 +17,10 @@ ROLE = {
         "did" : "did:mtm:ExsNKhvF3pqwDvFaVaiQnWWdyeVwxd",
         "privateKey" : "4YUNdokj58dyuRQpuoFY2WwCNG47Ermka5XoSFfjhdqZ",
         "publicKey" : "3rfrZgGZHXpjiGr1m3SKAbZSktYudfJCBsoJm4m1XUgp",
-        "credentialSubject" : {'selfie':'/9j/4AAQSkZJRgABAQAASABIAAD/.....',
-        'name':'Gil-dong','amount': 3,'buyAt': getTime()} 
+        "credentialSubject" : { 
+            'driverLicense' : {'selfie':'/9j/4AAQSkZJRgABAQAASABIAAD/.....','name':'Gil-dong','amount': 3,'buyAt': getTime()},
+            'jejuPass' : {'startDate':'2021-09-25T00:00:00.000', 'day':5, 'passType':'RestaurantOnly'}
+        }
     },
     "verifier" :{
 
@@ -32,7 +35,34 @@ ROLE = {
     }
 }
 
-def makeSampleDIDDocument():
+_VCSCHEME ={
+    "driverLicense" : "vc1",
+    "jejuPass" : "vc2"
+}
+
+_VCTYPE ={
+    "vc1" : "DriverCredential",
+    "vc2" : "JejuPassCredential"
+}
+
+def getVCType(schemeID):
+    return _VCTYPE[schemeID]
+
+def getVCScheme(scheme):
+    return _VCSCHEME[scheme]
+    
+def getVCSchemeJSON(schemeID):
+    issuerURL = "http://" + ROLE['issuer']['host'] + ":" + str(ROLE['issuer']['port'])
+    json = {
+        "scheme": ROLE['platform']['urls']['scheme']+"?id="+schemeID,
+        "VCPost": issuerURL+"/" + schemeID,
+        "VCGet" : issuerURL+"/" + schemeID
+    }
+    return json
+
+#role : "holder" / "issuer"
+#type : "Ed25519VerificationKey2018" / "RsaSignature2018"
+def makeSampleDIDDocument(role, algorithm):
     did = ROLE['holder']['did']
     pubkey = ROLE['holder']['publicKey']
     didDocument = {
@@ -60,14 +90,14 @@ def makeSampleDIDDocument():
     }
     return didDocument
 
-def makeSampleVC(issuer_did, credentialSubject):
+def makeSampleVC(issuer_did, type, credentialSubject):
     vc = {
         "@context": [
             "https://www.w3.org/2018/credentials/v1",
             "https://www.w3.org/2018/credentials/examples/v1"
         ],
         "id": " http://mitum.secureKim.com/credentials/3732 ",
-        "type": ["VerifiableCredential", "DriverCredential"],
+        "type": ["VerifiableCredential", type],
         "issuer": issuer_did,
         "issuanceDate": getTime(),
         "credentialSubject": credentialSubject,

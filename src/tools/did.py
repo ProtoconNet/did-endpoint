@@ -10,7 +10,6 @@ import jwt
 import uuid
 
 _CREDENTIAL_SUBJECTS = dict()
-_VCSCHEME ={"driverLicense" : "vc1"}
 
 def makeVC(vc):
     if verifyVC(vc):
@@ -102,6 +101,3 @@ def getPubkeyFromDIDDocument(did, documentURL):
     except Exception:
         pubkey = None
     return pubkey
-
-def getVCScheme(scheme):
-    return _VCSCHEME[scheme]
