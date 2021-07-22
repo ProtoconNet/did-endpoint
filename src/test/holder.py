@@ -37,8 +37,8 @@ data = DIDSAMPLE.makeSampleDIDDocument("holder", "Ed25519VerificationKey2018")
 response = requests.post(URL, data=json.dumps(data))
 LOGI("[Holder] Create DID Document : %s, VC Data : %s" % (data['id'], data))
 
-# 1.[GET] Req : VC Scheme location
-URL = _url+'/VCScheme?scheme=driverLicense' 
+# 1.[GET] Req : VC Schema location
+URL = _url+'/VCSchema?schema=driverLicense' 
 response = requests.get(URL) 
 LOGI("[Holder] VC Claim 위치 : %s : %s" % (response.status_code, response.text))
 data = json.loads(response.text)
@@ -70,8 +70,8 @@ LOGI("[Holder] VC 발급 결과 : %s" % response.text)
 #####################################################################################
 
 # JEJU PASS
-# 1.[GET] Req : VC Scheme location - jejuPass
-URL = _url+'/VCScheme?scheme=jejuPass' 
+# 1.[GET] Req : VC Schema location - jejuPass
+URL = _url+'/VCSchema?schema=jejuPass' 
 response = requests.get(URL) 
 LOGI("[Holder] VC Claim 위치 : %s : %s" % (response.status_code, response.text))
 data = json.loads(response.text)

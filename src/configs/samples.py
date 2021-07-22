@@ -28,14 +28,14 @@ ROLE = {
     "platform" :{
         'url' : 'http://mitum.securekim.com:8080',
         "urls" :{
-            "scheme" : "http://mitum.securekim.com:8080/v1/scheme",
+            "schema" : "http://mitum.securekim.com:8080/v1/schema",
             "resolver" : "https://did-resolver.mitum.com/ddo/",
             "document" : "http://mitum.securekim.com:8080/v1/DIDDocument"
         }
     }
 }
 
-_VCSCHEME ={
+_VCSCHEMA ={
     "driverLicense" : "vc1",
     "jejuPass" : "vc2"
 }
@@ -45,18 +45,18 @@ _VCTYPE ={
     "vc2" : "JejuPassCredential"
 }
 
-def getVCType(schemeID):
-    return _VCTYPE[schemeID]
+def getVCType(schemaID):
+    return _VCTYPE[schemaID]
 
-def getVCScheme(scheme):
-    return _VCSCHEME[scheme]
+def getVCSchema(schema):
+    return _VCSCHEMA[schema]
     
-def getVCSchemeJSON(schemeID):
+def getVCSchemaJSON(schemaID):
     issuerURL = "http://" + ROLE['issuer']['host'] + ":" + str(ROLE['issuer']['port'])
     json = {
-        "scheme": ROLE['platform']['urls']['scheme']+"?id="+schemeID,
-        "VCPost": issuerURL+"/" + schemeID,
-        "VCGet" : issuerURL+"/" + schemeID
+        "schema": ROLE['platform']['urls']['schema']+"?id="+schemaID,
+        "VCPost": issuerURL+"/" + schemaID,
+        "VCGet" : issuerURL+"/" + schemaID
     }
     return json
 

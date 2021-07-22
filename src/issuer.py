@@ -31,23 +31,23 @@ _ISSUER_SECRET = DIDSAMPLE.ROLE['issuer']['secret']
 _ISSUER_HOST = DIDSAMPLE.ROLE['issuer']['host']
 _ISSUER_PORT = DIDSAMPLE.ROLE['issuer']['port']
 _ISSUER_URL =  "http://"+_ISSUER_HOST + ":" + str(_ISSUER_PORT) 
-_PLATFORM_SCHEME_URL = DIDSAMPLE.ROLE['platform']['urls']['scheme']
+_PLATFORM_SCHEMA_URL = DIDSAMPLE.ROLE['platform']['urls']['schema']
 _PLATFORM_RESOLVER_URL = DIDSAMPLE.ROLE['platform']['urls']['resolver']
 
-@app.get('/VCScheme')
-def VCScheme():
+@app.get('/VCSchema')
+def VCSchema():
     try:
-        scheme = request.query['scheme']
-        schemeID = DIDSAMPLE.getVCScheme(scheme)
-        schemeJSON = json.dumps(
-            DIDSAMPLE.getVCSchemeJSON(schemeID)
+        schema = request.query['schema']
+        schemaID = DIDSAMPLE.getVCSchema(schema)
+        schemaJSON = json.dumps(
+            DIDSAMPLE.getVCSchemaJSON(schemaID)
         )
     except Exception as ex :
         LOGE(ex)
         response.status = 404
         return "Error"
-    LOGW("[Issuer] 1. VC Scheme 위치 알려주기 : %s" % (schemeJSON))
-    raise HTTPResponse(schemeJSON, status=200, headers={})
+    LOGW("[Issuer] 1. VC Schema 위치 알려주기 : %s" % (schemaJSON))
+    raise HTTPResponse(schemaJSON, status=200, headers={})
 
 def VCPost():
     try:
