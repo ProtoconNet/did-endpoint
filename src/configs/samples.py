@@ -90,14 +90,14 @@ def makeSampleDIDDocument(role, algorithm):
     }
     return didDocument
 
-def makeSampleVC(issuer_did, type, credentialSubject):
+def makeSampleVCwithoutJWS(issuer_did, vcType, credentialSubject):
     vc = {
         "@context": [
             "https://www.w3.org/2018/credentials/v1",
             "https://www.w3.org/2018/credentials/examples/v1"
         ],
         "id": " http://mitum.secureKim.com/credentials/3732 ",
-        "type": ["VerifiableCredential", type],
+        "type": ["VerifiableCredential", vcType],
         "issuer": issuer_did,
         "issuanceDate": getTime(),
         "credentialSubject": credentialSubject,
@@ -109,3 +109,26 @@ def makeSampleVC(issuer_did, type, credentialSubject):
         }
     }
     return vc
+
+def makeSampleVPwithoutJWS(holder_did, vcArr):
+    vp = {
+        "@context": [
+            "https://www.w3.org/2018/credentials/v1",
+            "https://www.w3.org/2018/credentials/examples/v1"
+        ],
+        "id": holder_did,
+        "type": [
+            "VerifiablePresentation"
+        ],
+        "verifiableCredential": vcArr,
+        "proof": [
+            {
+            "type": "Ed25519Signature2018",
+            "expire": getTime(),
+            "created": getTime(),
+            "proofPurpose": "authentication",
+            "verificationMethod": holder_did
+            }
+        ]
+    }
+    return vp

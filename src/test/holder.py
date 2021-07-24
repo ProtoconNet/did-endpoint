@@ -66,7 +66,7 @@ LOGI("[Holder] DID Auth 결과 : %s" % response.text)
 URL = VCGet
 response = requests.get(URL, headers={'Authorization':'Bearer ' + str(myJWT)}) 
 LOGI("[Holder] VC 발급 결과 : %s" % response.text)
-
+driverLicense = response.text
 #####################################################################################
 
 # JEJU PASS
@@ -99,3 +99,5 @@ LOGI("[Holder] DID Auth 결과 : %s" % response.text)
 URL = VCGet
 response = requests.get(URL, headers={'Authorization':'Bearer ' + str(myJWT)}) 
 LOGI("[Holder] VC 발급 결과 : %s" % response.text)
+jejuPass = response.text
+

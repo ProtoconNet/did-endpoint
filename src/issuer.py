@@ -31,8 +31,6 @@ _ISSUER_SECRET = DIDSAMPLE.ROLE['issuer']['secret']
 _ISSUER_HOST = DIDSAMPLE.ROLE['issuer']['host']
 _ISSUER_PORT = DIDSAMPLE.ROLE['issuer']['port']
 _ISSUER_URL =  "http://"+_ISSUER_HOST + ":" + str(_ISSUER_PORT) 
-_PLATFORM_SCHEMA_URL = DIDSAMPLE.ROLE['platform']['urls']['schema']
-_PLATFORM_RESOLVER_URL = DIDSAMPLE.ROLE['platform']['urls']['resolver']
 
 @app.get('/VCSchema')
 def VCSchema():
@@ -106,8 +104,8 @@ def VCGet(vcType):
         jwt = DID.getVerifiedJWT(request, _ISSUER_SECRET)
         myUUID = jwt['uuid']
         credentialSubject = DID.getCredentialSubject(myUUID)
-        # Todo : Change 'makeSampleVC' to 'makeVC'
-        vc = DIDSAMPLE.makeSampleVC(_ISSUER_DID, vcType , credentialSubject)
+        # Todo : Change 'makeSampleVCwithoutJWS' to 'makeVC'
+        vc = DIDSAMPLE.makeSampleVCwithoutJWS(_ISSUER_DID, vcType , credentialSubject)
         jws = DID.makeJWS(vc, _ISSUER_PRIVATEKEY)
         vc['proof']["jws"] = jws
     except Exception as ex :

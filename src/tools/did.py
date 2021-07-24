@@ -64,17 +64,31 @@ def getCredentialSubject(uuid):
     except Exception:
         return None
 
-def makeJWS(vc, privateKey):
+def makeJWS(body, privateKey):
     try :
         headerJSON = {"alg":"RS256","b64":False,"crit":["b64"]}
         header_base64 = base64.urlsafe_b64encode(json.dumps(headerJSON).encode('utf8'))
         header_ = header_base64.decode('utf8').rstrip("=")
-        vcString = json.dumps(vc)
-        sig_decoded = signString(vcString, privateKey)
+        bodyString = json.dumps(body)
+        sig_decoded = signString(bodyString, privateKey)
         sig_base64 = base64.urlsafe_b64encode(base58.b58decode(sig_decoded))
         sig_ = sig_base64.decode('utf8').rstrip("=")
         return header_ + ".." + sig_
     except Exception:
+        return None
+
+def verifyJWS(jws, str, publicKey):
+    try :
+        jwsArr = jws.split(".")
+        header = jwsArr[0]
+        tmpBody = jwsArr[1]
+        signature = jwsArr[2]
+        if tmpBody == '':
+            body = str
+        else :
+            body = tmpBody
+    except Exception as ex:
+        print(ex)
         return None
 
 def getVerifiedJWT(request, secret):
