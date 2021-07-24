@@ -3,4 +3,4 @@ __pycache__/
 *.py[cod]
 
 *.log
-configs/privates.py
+src/configs/privates.py
