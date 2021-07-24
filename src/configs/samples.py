@@ -23,7 +23,7 @@ ROLE = {
         }
     },
     "verifier" :{
-
+        "port" : 4444
     },
     "platform" :{
         'url' : 'http://mitum.securekim.com:8080',

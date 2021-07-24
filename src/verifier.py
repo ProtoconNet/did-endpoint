@@ -59,11 +59,10 @@ def postVP1():
 
     
 if __name__ == "__main__":
-    #app.run(host='0.0.0.0', port=_ISSUER_PORT)
     cherrypy.tree.graft(app, '/')
     cherrypy.config.update({
         'server.socket_host': '0.0.0.0',
-        'server.socket_port': _ISSUER_PORT,
+        'server.socket_port': _VERIFIER_PORT,
         'server.thread_pool': 30
     })
     cherrypy.server.start()
