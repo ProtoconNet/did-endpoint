@@ -2,7 +2,6 @@
 import bottle
 import canister
 import json
-from ed25519.keys import SigningKey
 import requests
 from bottle import response
 import os

@@ -3,7 +3,6 @@ import json
 import bottle
 import canister
 import cherrypy
-import base64
 from bottle import response, request, HTTPResponse
 import jwt
 from tools import did as DID

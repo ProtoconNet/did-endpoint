@@ -7,3 +7,4 @@ requests
 uuid
 sentry_sdk
 cherrypy
+cryptography

@@ -19,7 +19,8 @@ setup(
         'requests',
         'uuid',
         'sentry_sdk',
-        'cherrypy'
+        'cherrypy',
+        'cryptography'
     ],
     packages         = find_packages('./src', exclude=[]),
     keywords         = ['did-endpoint'],
