@@ -8,6 +8,7 @@ ROLE = {
     "issuer" :{
         "did" :"did:mtm:3rfrZgGZHXpjiGr1m3SKAbZSktYudfJCBsoJm4m1XUgp",
         "privateKey" : "4YUNdokj58dyuRQpuoFY2WwCNG47Ermka5XoSFfjhdqZ",
+        "privateKey_SSH" : "TODO",
         "publicKey" : "3rfrZgGZHXpjiGr1m3SKAbZSktYudfJCBsoJm4m1XUgp",
         "secret" : "ExsNKhvF3pqwDvFaVaiQnWWdyeVwxd",
         "host" : "127.0.0.1",
@@ -23,7 +24,9 @@ ROLE = {
         }
     },
     "verifier" :{
-        "port" : 4444
+        "host" : "127.0.0.1",
+        "port" : 4444,
+        "secret" : "securekim"
     },
     "platform" :{
         'url' : 'http://mitum.securekim.com:8080',
@@ -45,18 +48,34 @@ _VCTYPE ={
     "vc2" : "JejuPassCredential"
 }
 
+_VPSCHEMA ={
+    "rentCar" : "vp1",
+}
+
 def getVCType(schemaID):
     return _VCTYPE[schemaID]
 
 def getVCSchema(schema):
     return _VCSCHEMA[schema]
-    
+
 def getVCSchemaJSON(schemaID):
     issuerURL = "http://" + ROLE['issuer']['host'] + ":" + str(ROLE['issuer']['port'])
     json = {
         "schema": ROLE['platform']['urls']['schema']+"?id="+schemaID,
         "VCPost": issuerURL+"/" + schemaID,
         "VCGet" : issuerURL+"/" + schemaID
+    }
+    return json
+
+def getVPSchema(schema):
+    return _VPSCHEMA[schema]
+
+def getVPSchemaJSON(schemaID):
+    verifierURL = "http://" + ROLE['verifier']['host'] + ":" + str(ROLE['verifier']['port'])
+    json = {
+        "schema": ROLE['platform']['urls']['schema']+"?id="+schemaID,
+        "VPPost": verifierURL+"/" + schemaID,
+        "VPGet" : verifierURL+"/" + schemaID
     }
     return json
 
@@ -121,14 +140,12 @@ def makeSampleVPwithoutJWS(holder_did, vcArr):
             "VerifiablePresentation"
         ],
         "verifiableCredential": vcArr,
-        "proof": [
-            {
+        "proof": [{
             "type": "Ed25519Signature2018",
             "expire": getTime(),
             "created": getTime(),
             "proofPurpose": "authentication",
             "verificationMethod": holder_did
-            }
-        ]
+            }]
     }
     return vp

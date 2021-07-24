@@ -3,6 +3,7 @@ import json
 import bottle
 import canister
 import cherrypy
+import base64
 from bottle import response, request, HTTPResponse
 import jwt
 from tools import did as DID
@@ -25,7 +26,10 @@ LOGE = LOG.error
 app = bottle.Bottle()
 app.install(canister.Canister())
 
+_VERIFIER_HOST = DIDSAMPLE.ROLE['verifier']['host']
 _VERIFIER_PORT = DIDSAMPLE.ROLE['verifier']['port']
+_VERIFIER_SECRET = DIDSAMPLE.ROLE['verifier']['secret']
+_VERIFIER_URL =  "http://"+_VERIFIER_HOST + ":" + str(_VERIFIER_PORT) 
 
 @app.get('/VPSchema')
 def VPSchema():
@@ -44,14 +48,33 @@ def VPSchema():
 
 def VPPost():
     try:
-        vp = json.loads(request.body.read())
-        LOGW("[Verifier] 2. VP Post (%s)" % vp)
+        data = json.loads(request.body.read())
+        myUUID = DID.getUUID()
+        did = data['did']
+        vp = data['vp']
+        challenge = DID.generateChallenge()
+        documentURL = DIDSAMPLE.ROLE['platform']['urls']['document']+"?did="+did
+        pubkey = DID.getPubkeyFromDIDDocument(documentURL)
+        if pubkey == None:
+            response.status = 404
+            LOGE("[Issuer] 2. DID AUTH - Document Get 에러 발생 %s" % documentURL)
+            return "Error"
+        encoded_jwt = jwt.encode({"uuid": myUUID, "pubkey":pubkey, "challenge":challenge}, _VERIFIER_SECRET, algorithm="HS256")
+        try:
+            str_jwt = str(encoded_jwt.decode("utf-8"))
+        except Exception :
+            #FOR PYJWT LEGACY
+            str_jwt = encoded_jwt
+        print(vp)
+        DID.verifyVP(vp, pubkey)
+        LOGW("[Verifier] 2. Verify VP - VP Post(%s) : 생성한 챌린지(%s), DID Document의 공개키(%s), Holder에게 JWT 발급(%s)." 
+        % (vp, challenge, pubkey, encoded_jwt))
     except Exception as ex :
         response.status = 404
         LOGE(ex)
-        LOGW("[Verifier] 2. VC Post에서 Exception 발생")
+        LOGW("[Verifier] 2. VP Post에서 Exception 발생")
         return "Error"
-    raise HTTPResponse(json.dumps({}), status=202, headers={})
+    raise HTTPResponse(json.dumps({"payload": challenge, "endPoint":_VERIFIER_URL+"/response"}), status=202, headers={'Authorization':str_jwt})
 
 @app.post('/vp1')
 def postVP1():

@@ -29,6 +29,7 @@ _url = "http://"+ DIDSAMPLE.ROLE['issuer']['host'] + ":" + str(DIDSAMPLE.ROLE['i
 
 app = bottle.Bottle()
 app.install(canister.Canister())
+############## VC Issuance - DRIVER LICENSE ##############
 
 # 0. [POST] Req : Create DID Document
 URL = DIDSAMPLE.ROLE['platform']['urls']['document']
@@ -40,7 +41,7 @@ LOGI("[Holder] Create DID Document : %s, VC Data : %s" % (data['id'], data))
 # 1.[GET] Req : VC Schema location
 URL = _url+'/VCSchema?schema=driverLicense' 
 response = requests.get(URL) 
-LOGI("[Holder] VC Claim 위치 : %s : %s" % (response.status_code, response.text))
+LOGI("[Holder] VC Schema 위치 : %s : %s" % (response.status_code, response.text))
 data = json.loads(response.text)
 VCGet = data['VCGet']
 VCPost = data['VCPost']
@@ -53,7 +54,6 @@ response = requests.post(URL, data=json.dumps(data))
 myJWT = response.headers.get('Authorization')
 LOGI("[Holder] DID : %s, VC Data : %s, JWT : %s" % (data['did'], data, myJWT))
 
-#assert(jwt.decode(myJWT, "abc", algorithms=["HS256"]))
 data = json.loads(response.text)
 signature = DID.signString(data['payload'], DIDSAMPLE.ROLE['holder']['privateKey'])
 
@@ -66,14 +66,14 @@ LOGI("[Holder] DID Auth 결과 : %s" % response.text)
 URL = VCGet
 response = requests.get(URL, headers={'Authorization':'Bearer ' + str(myJWT)}) 
 LOGI("[Holder] VC 발급 결과 : %s" % response.text)
-driverLicense = response.text
-#####################################################################################
+VC_driverLicense = json.loads(response.text)['VC']
 
-# JEJU PASS
+############## VC Issuance - JEJU PASS ##############
+# 
 # 1.[GET] Req : VC Schema location - jejuPass
 URL = _url+'/VCSchema?schema=jejuPass' 
 response = requests.get(URL) 
-LOGI("[Holder] VC Claim 위치 : %s : %s" % (response.status_code, response.text))
+LOGI("[Holder] VC Schema 위치 : %s : %s" % (response.status_code, response.text))
 data = json.loads(response.text)
 VCGet = data['VCGet']
 VCPost = data['VCPost']
@@ -86,7 +86,6 @@ response = requests.post(URL, data=json.dumps(data))
 myJWT = response.headers.get('Authorization')
 LOGI("[Holder] DID : %s, VC Data : %s, JWT : %s" % (data['did'], data, myJWT))
 
-#assert(jwt.decode(myJWT, "abc", algorithms=["HS256"]))
 data = json.loads(response.text)
 signature = DID.signString(data['payload'], DIDSAMPLE.ROLE['holder']['privateKey'])
 
@@ -99,5 +98,32 @@ LOGI("[Holder] DID Auth 결과 : %s" % response.text)
 URL = VCGet
 response = requests.get(URL, headers={'Authorization':'Bearer ' + str(myJWT)}) 
 LOGI("[Holder] VC 발급 결과 : %s" % response.text)
-jejuPass = response.text
+VC_jejuPass = json.loads(response.text)['VC']
 
+############## VP - JEJU PASS, DRIVER LICENSE ##############
+# 
+
+_url = "http://"+ DIDSAMPLE.ROLE['verifier']['host'] + ":" + str(DIDSAMPLE.ROLE['verifier']['port'])
+
+# 1.[GET] Req : VP Schema location
+URL = _url+'/VPSchema?schema=rentCar' 
+response = requests.get(URL) 
+LOGI("[Holder] VP : %s : %s" % (response.status_code, response.text))
+data = json.loads(response.text)
+VPGet = data['VPGet']
+VPPost = data['VPPost']
+
+# 2.[POST] Req : DID & VP
+vcArr = [VC_driverLicense, VC_jejuPass]
+holderDID = DIDSAMPLE.ROLE['holder']['did']
+vp = DIDSAMPLE.makeSampleVPwithoutJWS(holderDID, vcArr)
+vpJWS = DID.makeJWS_jwtlib(vp, DIDSAMPLE.ROLE['holder']['privateKey'])
+vp['proof'][0]["jws"] = vpJWS
+
+# 2.[POST] Req : DID & VP
+URL = VPPost
+data = {'did': DIDSAMPLE.ROLE['holder']['did'],
+'vp':vp} 
+response = requests.post(URL, data=json.dumps(data))
+myJWT = response.headers.get('Authorization')
+LOGI("[Holder] DID : %s, VP Data : %s, JWT : %s" % (data['did'], data, myJWT))

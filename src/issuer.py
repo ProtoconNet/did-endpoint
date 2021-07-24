@@ -56,7 +56,7 @@ def VCPost():
         DID.saveCredentialSubject(myUUID, credentialSubject)
         challenge = DID.generateChallenge()
         documentURL = DIDSAMPLE.ROLE['platform']['urls']['document']+"?did="+did
-        pubkey = DID.getPubkeyFromDIDDocument(did, documentURL)
+        pubkey = DID.getPubkeyFromDIDDocument(documentURL)
         if pubkey == None:
             response.status = 404
             LOGE("[Issuer] 2. DID AUTH - Document Get 에러 발생 %s" % documentURL)
@@ -106,7 +106,8 @@ def VCGet(vcType):
         credentialSubject = DID.getCredentialSubject(myUUID)
         # Todo : Change 'makeSampleVCwithoutJWS' to 'makeVC'
         vc = DIDSAMPLE.makeSampleVCwithoutJWS(_ISSUER_DID, vcType , credentialSubject)
-        jws = DID.makeJWS(vc, _ISSUER_PRIVATEKEY)
+        #jws = DID.makeJWS(vc, _ISSUER_PRIVATEKEY)
+        jws = DID.makeJWS_jwtlib(vc, _ISSUER_PRIVATEKEY)
         vc['proof']["jws"] = jws
     except Exception as ex :
         LOGE(ex)
