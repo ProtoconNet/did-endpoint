@@ -10,7 +10,7 @@ ROLE = {
         "privateKey" : "4YUNdokj58dyuRQpuoFY2WwCNG47Ermka5XoSFfjhdqZ",
         "publicKey" : "3rfrZgGZHXpjiGr1m3SKAbZSktYudfJCBsoJm4m1XUgp",
         "secret" : "ExsNKhvF3pqwDvFaVaiQnWWdyeVwxd",
-        "host" : "127.0.0.1",
+        "host" : "mtm.securekim.com",
         "port" : 3333
     },
     "holder" : {
@@ -23,7 +23,7 @@ ROLE = {
         }
     },
     "verifier" :{
-        "port" : 4444
+
     },
     "platform" :{
         'url' : 'http://mitum.securekim.com:8080',
