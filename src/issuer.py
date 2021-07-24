@@ -16,7 +16,7 @@ except Exception:
     print('Not exist : configs/privates. LOG={"sentryURL" : "..."}')
 
 # JUST Logging
-LOG = DIDLOG.__get_logger('warning')
+LOG = DIDLOG.__get_logger('warning', 'issuer.log')
 LOGI = LOG.info
 LOGD = LOG.debug
 LOGW = LOG.warning

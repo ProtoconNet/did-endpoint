@@ -10,7 +10,7 @@ _level = {
     "critical" : logging.CRITICAL
 }
 
-def __get_logger(level):
+def __get_logger(level, logfile):
     __logger = logging.getLogger('logger')
     formatter = logging.Formatter(
         '%(levelname)s#%(asctime)s#%(message)s >> @file::%(filename)s@line::%(lineno)s')
@@ -18,9 +18,8 @@ def __get_logger(level):
     stream_handler.setFormatter(formatter)
     __logger.addHandler(stream_handler)
     __logger.setLevel(_level[level])
-    logging.basicConfig(filename='debug.log',level=_level[level])
+    logging.basicConfig(filename=logfile,level=_level[level])
     return __logger
-
 
 sentry_logging = LoggingIntegration(
     level=logging.WARNING,         # Capture ''

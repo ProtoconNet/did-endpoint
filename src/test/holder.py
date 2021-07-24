@@ -20,7 +20,7 @@ from configs import samples as DIDSAMPLE
 #     print('Not exist : configs/privates. LOG={"sentryURL" : "..."}')
 
 # JUST Logging
-LOG = DIDLOG.__get_logger('info')
+LOG = DIDLOG.__get_logger('info', 'holder.log')
 LOGI = LOG.info
 LOGD = LOG.debug
 LOGW = LOG.warning

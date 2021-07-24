@@ -2,5 +2,5 @@
 __pycache__/
 *.py[cod]
 
-debug.log
+*.log
 configs/privates.py
