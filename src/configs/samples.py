@@ -3,6 +3,13 @@ import datetime
 def getTime():
     return str(datetime.datetime.utcnow().isoformat())
 
+#times : days=10
+def addTime(addDay):
+    now = datetime.datetime.now()
+    now += datetime.timedelta(days=addDay)
+    myDate = now.isoformat()
+    return str(myDate)
+    
 
 ROLE = {
     "issuer" :{
@@ -11,7 +18,7 @@ ROLE = {
         "privateKey_SSH" : "TODO",
         "publicKey" : "3rfrZgGZHXpjiGr1m3SKAbZSktYudfJCBsoJm4m1XUgp",
         "secret" : "ExsNKhvF3pqwDvFaVaiQnWWdyeVwxd",
-        "host" : "mtm.securekim.com",
+        "host" : "127.0.0.1",
         "port" : 3333
     },
     "holder" : {
@@ -24,7 +31,7 @@ ROLE = {
         }
     },
     "verifier" :{
-        "host" : "mtm.securekim.com",
+        "host" : "127.0.0.1",
         "port" : 3082,
         "secret" : "securekim"
     },
@@ -122,6 +129,7 @@ def makeSampleVCwithoutJWS(issuer_did, vcType, credentialSubject):
         "type": ["VerifiableCredential", vcType],
         "issuer": issuer_did,
         "issuanceDate": getTime(),
+        "expirationDate": addTime(365),
         "credentialSubject": credentialSubject,
         "proof": {
             "type": "Ed25519Signature2018",
