@@ -119,10 +119,21 @@ vp = DIDSAMPLE.makeSampleVPwithoutJWS(holderDID, vcArr)
 vpJWS = DID.makeJWS_jwtlib(vp, DIDSAMPLE.ROLE['holder']['privateKey'])
 vp['proof'][0]["jws"] = vpJWS
 
-# 2.[POST] Req : DID & VP
 URL = VPPost
-data = {'did': DIDSAMPLE.ROLE['holder']['did'],
-'vp':vp} 
+data = {'did': DIDSAMPLE.ROLE['holder']['did'], 'vp':vp} 
 response = requests.post(URL, data=json.dumps(data))
 myJWT = response.headers.get('Authorization')
 LOGI("[Holder] DID : %s, VP Data : %s, JWT : %s" % (data['did'], data, myJWT))
+
+data = json.loads(response.text)
+signature = DID.signString(data['payload'], DIDSAMPLE.ROLE['holder']['privateKey'])
+
+# 3.[GET] Req : Challenge & Response 
+URL = data['endPoint'] + '?signature='+signature 
+response = requests.get(URL, headers={'Authorization':'Bearer ' + str(myJWT)}) 
+LOGI("[Holder] DID Auth 결과 : %s" % response.text)
+
+# 4.[GET] Req : VP
+URL = VPGet
+response = requests.get(URL, headers={'Authorization':'Bearer ' + str(myJWT)}) 
+LOGI("[Holder] VP 결과 : %s" % response.text)

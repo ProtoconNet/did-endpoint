@@ -91,5 +91,4 @@ vp['proof'][0]["jws"] = vpJWS
 
 
 ## VERIFY VP
-DID.verifyVP(vp, publicKeyB58)
-
+#DID.verifyVP(vp, publicKeyB58)

@@ -52,6 +52,9 @@ _VPSCHEMA ={
     "rentCar" : "vp1",
 }
 
+def getDIDDocumentURL(did):
+    return ROLE["platform"]["urls"]["document"]+"?did="+did
+
 def getVCType(schemaID):
     return _VCTYPE[schemaID]
 
@@ -82,8 +85,8 @@ def getVPSchemaJSON(schemaID):
 #role : "holder" / "issuer"
 #type : "Ed25519VerificationKey2018" / "RsaSignature2018"
 def makeSampleDIDDocument(role, algorithm):
-    did = ROLE['holder']['did']
-    pubkey = ROLE['holder']['publicKey']
+    did = ROLE[role]['did']
+    pubkey = ROLE[role]['publicKey']
     didDocument = {
         "@context": [
             "https://www.w3.org/2018/credentials/v1",
@@ -93,7 +96,7 @@ def makeSampleDIDDocument(role, algorithm):
         "authentication":[
             {
                 "id" : did+"#z"+did[:8],
-                "type" : "Ed25519VerificationKey2018",
+                "type" : algorithm,
                 "controller" : did,
                 "publicKeyMultibase" : "z"+did[:8]
             }
@@ -101,7 +104,7 @@ def makeSampleDIDDocument(role, algorithm):
         "verificationMethod" : [
             {
                 "id" : did,
-                "type" : "Ed25519VerificationKey2018",
+                "type" : algorithm,
                 "controller" : did,
                 "publicKeyBase58" : pubkey
             }

@@ -13,6 +13,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, PublicFormat, NoEncryption
 
 _CREDENTIAL_SUBJECTS = dict()
+_UUID_STATUS = dict()
 
 def makeVC(vc):
     if verifyVC(vc):
@@ -24,7 +25,7 @@ def makeVC(vc):
 def verifyVC(vc):
     return True
 
-def getUUID():
+def genUUID():
     return str(uuid.uuid4())
 
 def signString(string, privateKeyB58):
@@ -57,6 +58,19 @@ def saveCredentialSubject(uuid, credentialSubject):
     try:
         _CREDENTIAL_SUBJECTS[uuid] = credentialSubject
         return True
+    except Exception:
+        return False
+
+def saveUUIDStatus(uuid, status):
+    try:
+        _UUID_STATUS[uuid] = status
+        return True
+    except Exception:
+        return False
+
+def getUUIDStatus(uuid):
+    try:
+        return _UUID_STATUS[uuid]
     except Exception:
         return False
 
@@ -96,11 +110,22 @@ def makeJWS_jwtlib(body,privateKeyB58):
         return ex
     return jws
 
+def getDIDFromVC(vc):
+    return vc['issuer']
+
+def getVCSFromVP(vp):
+    return vp['verifiableCredential']
+
+def verifyVC(vc, publicKeyB58):
+    jws = vc['proof'].pop('jws') # !!proof is OBJECT!!
+    dumpedVP = json.dumps(vc, separators=(',', ':')).encode('utf8')
+    dumpedVPB64 = base64.urlsafe_b64encode(dumpedVP)
+    dumpedVPB64decoded = dumpedVPB64.decode("utf-8").rstrip("=")
+    return verifyJWS(jws, dumpedVPB64decoded, publicKeyB58)
+
 def verifyVP(vp, publicKeyB58):
-    #1. VERIFY HOLDER 
-    # PROBLEM : JWS는 줄바꿈이 없어야 한다
-    # vp dump 한거는 
-    jws = vp['proof'][0].pop('jws')
+    #1. VERIFY HOLDER
+    jws = vp['proof'][0].pop('jws') # !!proof is ARRAY!!
     dumpedVP = json.dumps(vp, separators=(',', ':')).encode('utf8')
     dumpedVPB64 = base64.urlsafe_b64encode(dumpedVP)
     dumpedVPB64decoded = dumpedVPB64.decode("utf-8").rstrip("=")

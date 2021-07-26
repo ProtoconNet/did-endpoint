@@ -3,6 +3,7 @@ import json
 import bottle
 import canister
 import cherrypy
+import requests
 from bottle import response, request, HTTPResponse
 import jwt
 from tools import did as DID
@@ -32,6 +33,13 @@ _ISSUER_HOST = DIDSAMPLE.ROLE['issuer']['host']
 _ISSUER_PORT = DIDSAMPLE.ROLE['issuer']['port']
 _ISSUER_URL =  "http://"+_ISSUER_HOST + ":" + str(_ISSUER_PORT) 
 
+def initDID():
+    URL = DIDSAMPLE.ROLE['platform']['urls']['document']
+    data = DIDSAMPLE.makeSampleDIDDocument("issuer", "Ed25519VerificationKey2018")
+    response = requests.post(URL, data=json.dumps(data))
+    LOGI("[Issuer]0. Create DID Document : %s, Data : %s, Response : %s " % (data['id'], data, response))
+
+
 @app.get('/VCSchema')
 def VCSchema():
     try:
@@ -50,12 +58,12 @@ def VCSchema():
 def VCPost():
     try:
         vc = json.loads(request.body.read())
-        myUUID = DID.getUUID()
+        myUUID = DID.genUUID()
         did = vc['did']
         credentialSubject = vc['credentialSubject']
         DID.saveCredentialSubject(myUUID, credentialSubject)
         challenge = DID.generateChallenge()
-        documentURL = DIDSAMPLE.ROLE['platform']['urls']['document']+"?did="+did
+        documentURL = DIDSAMPLE.getDIDDocumentURL(did)
         pubkey = DID.getPubkeyFromDIDDocument(documentURL)
         if pubkey == None:
             response.status = 404
@@ -74,6 +82,7 @@ def VCPost():
         LOGE(ex)
         LOGW("[Issuer] 2. DID AUTH - VC Post에서 Exception 발생")
         return "Error"
+    DID.saveUUIDStatus(myUUID, True)
     raise HTTPResponse(json.dumps({"payload": challenge, "endPoint":_ISSUER_URL+"/response"}), status=202, headers={'Authorization':str_jwt})
 
 @app.get('/response')
@@ -91,10 +100,11 @@ def response():
         if challengeRet == True:
             LOGW("[Issuer] 3. DID AUTH - Verified : 사인 값(%s) 검증 성공." % signature)
         else:
-            #TODO : Expired Token
+            DID.saveUUIDStatus(jwt['uuid'], False)
             LOGW("[Issuer] 3. DID AUTH - Verify : Challenge(%s)의 사인 값(%s)을 pubkey(%s)로 검증 실패." % (jwt['challenge'] , signature, jwt['pubkey']))
     except Exception as ex :
         challengeRet = False
+        DID.saveUUIDStatus(jwt['uuid'], False)
         LOGE(ex)
         LOGW("[Issuer] 3. DID AUTH - Verify : ERROR : 사인 검증 실패 : %s" % signature)
     raise HTTPResponse(json.dumps({"Response": challengeRet}), status=202, headers={})
@@ -103,6 +113,9 @@ def VCGet(vcType):
     try:
         jwt = DID.getVerifiedJWT(request, _ISSUER_SECRET)
         myUUID = jwt['uuid']
+        if DID.getUUIDStatus(myUUID) == False:
+            response.status = 401
+            return "Error - Expired UUID"
         credentialSubject = DID.getCredentialSubject(myUUID)
         # Todo : Change 'makeSampleVCwithoutJWS' to 'makeVC'
         vc = DIDSAMPLE.makeSampleVCwithoutJWS(_ISSUER_DID, vcType , credentialSubject)
@@ -111,11 +124,14 @@ def VCGet(vcType):
         vc['proof']["jws"] = jws
     except Exception as ex :
         LOGE(ex)
+        try:
+            DID.saveUUIDStatus(myUUID, False)
+        except Exception as ex :
+            LOGE(ex)
         response.status = 404
         return "Error"
     LOGW("[Issuer] 4. VC Issuance - %s" % vc)
     raise HTTPResponse(json.dumps({"Response":True, "VC": vc}), status=202, headers={})
-
 
 @app.post('/vc1')
 def postVC1():
@@ -135,6 +151,7 @@ def getVC2():
 
 if __name__ == "__main__":
     #app.run(host='0.0.0.0', port=_ISSUER_PORT)
+    initDID()
     cherrypy.tree.graft(app, '/')
     cherrypy.config.update({
         'server.socket_host': '0.0.0.0',
