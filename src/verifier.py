@@ -47,6 +47,7 @@ def VPSchema():
 
 def VPPost():
     try:
+        response.status = 400
         data = json.loads(request.body.read())
         myUUID = DID.genUUID()
         did = data['did']
@@ -85,6 +86,7 @@ def VPPost():
         LOGE(ex)
         LOGW("[Verifier] 2-1. VP Post에서 Exception 발생")
         return "Error - VP"
+    response.status = 200
     DID.saveUUIDStatus(myUUID, True)
     raise HTTPResponse(json.dumps({"payload": challenge, "endPoint":_VERIFIER_URL+"/response"}), status=202, headers={'Authorization':str_jwt})
 
