@@ -8,6 +8,7 @@ import string
 import json
 import jwt
 import uuid
+import datetime
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, PublicFormat, NoEncryption
@@ -16,13 +17,20 @@ _CREDENTIAL_SUBJECTS = dict()
 _UUID_STATUS = dict()
 
 def makeVC(vc):
-    if verifyVC(vc):
+    if verifiedVC(vc):
         return vc
     else:
         return None
 
+def getTime():
+    return str(datetime.datetime.utcnow().isoformat())
+
+def isExpired(expire):
+    now = getTime()
+    return expire < now
+    
 #Todo
-def verifyVC(vc):
+def verifiedVC(vc):
     return True
 
 def genUUID():

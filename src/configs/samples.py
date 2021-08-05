@@ -153,7 +153,7 @@ def makeSampleVPwithoutJWS(holder_did, vcArr):
         "verifiableCredential": vcArr,
         "proof": [{
             "type": "Ed25519Signature2018",
-            "expire": getTime(),
+            "expire": addTime(365),
             "created": getTime(),
             "proofPurpose": "authentication",
             "verificationMethod": holder_did
