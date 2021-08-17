@@ -76,13 +76,13 @@ def saveUUIDStatus(uuid, status):
     except Exception:
         return False
 
-def getUUIDStatus(uuid):
+def loadUUIDStatus(uuid):
     try:
         return _UUID_STATUS[uuid]
     except Exception:
         return False
 
-def getCredentialSubject(uuid):
+def loadCredentialSubject(uuid):
     try:
         credentialSubject = _CREDENTIAL_SUBJECTS[uuid]
         return credentialSubject

@@ -119,7 +119,7 @@ def response():
 def VPGet():
     try:
         jwt = DID.getVerifiedJWT(request, _VERIFIER_SECRET)
-        if DID.getUUIDStatus(jwt['uuid']) == False:
+        if DID.loadUUIDStatus(jwt['uuid']) == False:
             response.status = 401
             return "Error - Expired UUID"
     except Exception as ex :

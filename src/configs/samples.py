@@ -59,6 +59,8 @@ _VPSCHEMA ={
     "rentCar" : "vp1",
 }
 
+_BUY_SAMPLE = dict()
+
 def getDIDDocumentURL(did):
     return ROLE["platform"]["urls"]["document"]+"?did="+did
 
@@ -160,3 +162,16 @@ def makeSampleVPwithoutJWS(holder_did, vcArr):
             }]
     }
     return vp
+
+def saveBuySample(uuid, contents):
+    try:
+        _BUY_SAMPLE[uuid] = contents
+        return True
+    except Exception:
+        return False
+
+def loadBuySample(uuid):
+    try:
+        return _BUY_SAMPLE[uuid]
+    except Exception:
+        return False

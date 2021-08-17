@@ -48,12 +48,13 @@ def VCSchema():
         schemaJSON = json.dumps(
             DIDSAMPLE.getVCSchemaJSON(schemaID)
         )
+        status = 200
     except Exception as ex :
         LOGE(ex)
-        response.status = 404
-        return "Error"
+        status = 404
+        return HTTPResponse(status=status, headers={})
     LOGW("[Issuer] 1. VC Schema 위치 알려주기 : %s" % (schemaJSON))
-    raise HTTPResponse(schemaJSON, status=200, headers={})
+    return HTTPResponse(schemaJSON, status=status, headers={})
 
 def VCPost():
     try:
@@ -66,72 +67,80 @@ def VCPost():
         documentURL = DIDSAMPLE.getDIDDocumentURL(did)
         pubkey = DID.getPubkeyFromDIDDocument(documentURL)
         if pubkey == None:
-            response.status = 404
             LOGE("[Issuer] 2. DID AUTH - Document Get 에러 발생 %s" % documentURL)
-            return "Error"
+            status = 404
+            return HTTPResponse(status=status)
         encoded_jwt = jwt.encode({"uuid": myUUID, "pubkey":pubkey, "challenge":challenge}, _ISSUER_SECRET, algorithm="HS256")
         LOGW("[Issuer] 2. DID AUTH - VC Post(%s) : 생성한 챌린지(%s), DID Document의 공개키(%s), Holder에게 JWT 발급(%s)." 
         % (credentialSubject, challenge, pubkey, encoded_jwt))
         try:
             str_jwt = str(encoded_jwt.decode("utf-8"))
+            status = 200
         except Exception :
             #FOR PYJWT LEGACY
             str_jwt = encoded_jwt
+            status = 401
     except Exception as ex :
-        response.status = 404
         LOGE(ex)
         LOGW("[Issuer] 2. DID AUTH - VC Post에서 Exception 발생")
-        return "Error"
+        status = 404
+        return HTTPResponse(status=status)
     DID.saveUUIDStatus(myUUID, True)
-    raise HTTPResponse(json.dumps({"payload": challenge, "endPoint":_ISSUER_URL+"/response"}), status=202, headers={'Authorization':str_jwt})
+    return HTTPResponse(json.dumps({"payload": challenge, "endPoint":_ISSUER_URL+"/response"}), status=status, headers={'Authorization':str_jwt})
 
 @app.get('/response')
-def response():
+def res():
     try:
         signature = request.query['signature']
         LOGI("[Issuer] 3. DID AUTH - Signature(%s)" % str(signature))
     except Exception:
-        response.status = 400
-        return "Error"
+        status = 400
+        return HTTPResponse(status=status)
     try:
         jwt = DID.getVerifiedJWT(request, _ISSUER_SECRET)
         LOGI("[Issuer] 3. DID AUTH - jwt 결과(%s)" % str(jwt))
         challengeRet = DID.verifyString(jwt['challenge'] , signature, jwt['pubkey'])
         if challengeRet == True:
             LOGW("[Issuer] 3. DID AUTH - Verified : 사인 값(%s) 검증 성공." % signature)
+            status = 200
         else:
             DID.saveUUIDStatus(jwt['uuid'], False)
             LOGW("[Issuer] 3. DID AUTH - Verify : Challenge(%s)의 사인 값(%s)을 pubkey(%s)로 검증 실패." % (jwt['challenge'] , signature, jwt['pubkey']))
+            status = 401
     except Exception as ex :
         challengeRet = False
         DID.saveUUIDStatus(jwt['uuid'], False)
         LOGE(ex)
         LOGW("[Issuer] 3. DID AUTH - Verify : ERROR : 사인 검증 실패 : %s" % signature)
-    raise HTTPResponse(json.dumps({"Response": challengeRet}), status=202, headers={})
+        status = 400
+    return HTTPResponse(json.dumps({"Response": challengeRet}), status=status, headers={})
 
 def VCGet(vcType):
     try:
         jwt = DID.getVerifiedJWT(request, _ISSUER_SECRET)
         myUUID = jwt['uuid']
-        if DID.getUUIDStatus(myUUID) == False:
-            response.status = 401
-            return "Error - Expired UUID"
-        credentialSubject = DID.getCredentialSubject(myUUID)
+        if DID.loadUUIDStatus(myUUID) == False:
+            status = 401
+            return HTTPResponse(status=status, headers={})
+        credentialSubject = DID.loadCredentialSubject(myUUID)
         # Todo : Change 'makeSampleVCwithoutJWS' to 'makeVC'
         vc = DIDSAMPLE.makeSampleVCwithoutJWS(_ISSUER_DID, vcType , credentialSubject)
         #jws = DID.makeJWS(vc, _ISSUER_PRIVATEKEY)
         jws = DID.makeJWS_jwtlib(vc, _ISSUER_PRIVATEKEY)
         vc['proof']["jws"] = jws
+        status = 200
     except Exception as ex :
         LOGE(ex)
+        status = 404
         try:
             DID.saveUUIDStatus(myUUID, False)
         except Exception as ex :
             LOGE(ex)
-        response.status = 404
-        return "Error"
+            status = 405
+        return HTTPResponse(status=status, headers={})
     LOGW("[Issuer] 4. VC Issuance - %s" % vc)
-    raise HTTPResponse(json.dumps({"Response":True, "VC": vc}), status=202, headers={})
+    return HTTPResponse(json.dumps({"Response":True, "VC": vc}), status=status, headers={})
+
 
 @app.post('/vc1')
 def postVC1():
@@ -148,6 +157,10 @@ def getVC1():
 @app.get('/vc2')
 def getVC2():
     return VCGet(DIDSAMPLE.getVCType('vc2'))
+
+@app.post('/buy')
+def buy():
+    return DIDSAMPLE.VCBuy(HTTPResponse)
 
 if __name__ == "__main__":
     #app.run(host='0.0.0.0', port=_ISSUER_PORT)
