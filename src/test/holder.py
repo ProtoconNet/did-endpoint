@@ -69,6 +69,14 @@ VC_driverLicense = json.loads(response.text)['VC']
 
 ############## VC Issuance - JEJU PASS ##############
 # 
+# 0.[POST] req : Buy Jejupass
+URL = _url+'/jejuPass' 
+data = {'did': DIDSAMPLE.ROLE['holder']['did'],
+'credentialSubject':DIDSAMPLE.ROLE['holder']['credentialSubject']['jejuPass']} 
+response = requests.post(URL, data=json.dumps(data))
+data = json.loads(response.text)
+buyID = data['buyID']
+
 # 1.[GET] Req : VC Schema location - jejuPass
 URL = _url+'/VCSchema?schema=jejuPass' 
 response = requests.get(URL) 
@@ -79,11 +87,10 @@ VCPost = data['VCPost']
 
 # 2.[POST] Req : DID & VC
 URL = VCPost
-data = {'did': DIDSAMPLE.ROLE['holder']['did'],
-'credentialSubject':DIDSAMPLE.ROLE['holder']['credentialSubject']['jejuPass']} 
+data = {'buyID': buyID}
 response = requests.post(URL, data=json.dumps(data))
 myJWT = response.headers.get('Authorization')
-LOGI("[Holder] DID : %s, VC Data : %s, JWT : %s" % (data['did'], data, myJWT))
+LOGI("[Holder] JWT : %s" % (myJWT))
 
 data = json.loads(response.text)
 signature = DID.signString(data['payload'], DIDSAMPLE.ROLE['holder']['privateKey'])

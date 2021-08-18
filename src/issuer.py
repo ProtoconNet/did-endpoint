@@ -60,8 +60,19 @@ def VCPost():
     try:
         vc = json.loads(request.body.read())
         myUUID = DID.genUUID()
-        did = vc['did']
-        credentialSubject = vc['credentialSubject']
+        try:
+            did = vc['did']
+            credentialSubject = vc['credentialSubject']
+        except Exception:
+            try :
+                buyID = vc['buyID']
+                buySample = DIDSAMPLE.loadBuySample(buyID)
+                did = buySample['did']
+                credentialSubject = buySample['credentialSubject']
+            except Exception:
+                LOGE("[Issuer] 2. VC POST - 에러 발생 %s" % vc)
+                status = 400
+                return HTTPResponse(status=status)
         DID.saveCredentialSubject(myUUID, credentialSubject)
         challenge = DID.generateChallenge()
         documentURL = DIDSAMPLE.getDIDDocumentURL(did)
@@ -141,6 +152,29 @@ def VCGet(vcType):
     LOGW("[Issuer] 4. VC Issuance - %s" % vc)
     return HTTPResponse(json.dumps({"Response":True, "VC": vc}), status=status, headers={})
 
+def buyPost():
+    try:
+        buyInfo = json.loads(request.body.read())
+        buyID = DID.genUUID()
+        #did = buyInfo['did']
+        #credentialSubject = buyInfo['credentialSubject']
+        DIDSAMPLE.saveBuySample(buyID, buyInfo)
+        status = 200
+        LOGW("[Issuer] 0. Buy JejuPass. buyID : %s, buyInfo : %s" % (buyID, buyInfo))
+        return HTTPResponse(json.dumps({"Response":True, "buyID": buyID}), status=status, headers={})
+    except Exception as ex:
+        LOGE(ex)
+        status = 400    
+        return HTTPResponse(json.dumps({"Response":False}), status=status, headers={})
+
+def buyGet():
+    try :
+        buyID = request.query['buyID']
+        DIDSAMPLE.loadBuySample(buyID)
+    except Exception as ex:
+        LOGE(ex)
+        status = 404
+        return HTTPResponse(json.dumps({"result":False}), status=status, headers={})
 
 @app.post('/vc1')
 def postVC1():
@@ -158,9 +192,13 @@ def getVC1():
 def getVC2():
     return VCGet(DIDSAMPLE.getVCType('vc2'))
 
-@app.post('/buy')
-def buy():
-    return DIDSAMPLE.VCBuy(HTTPResponse)
+@app.post('/jejuPass')
+def buyPassPost():
+    return buyPost()
+
+@app.get('/jejuPass')
+def buyPassGet():
+    return buyGet()
 
 if __name__ == "__main__":
     #app.run(host='0.0.0.0', port=_ISSUER_PORT)
