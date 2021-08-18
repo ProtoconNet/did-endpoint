@@ -38,6 +38,8 @@ def initDID():
     data = DIDSAMPLE.makeSampleDIDDocument("issuer", "Ed25519VerificationKey2018")
     response = requests.post(URL, data=json.dumps(data))
     LOGI("[Issuer]0. Create DID Document : %s, Data : %s, Response : %s " % (data['id'], data, response))
+    buyID = DID.genUUID()
+    #DIDSAMPLE.saveBuySample(buyID, buyInfo)
 
 
 @app.get('/VCSchema')
@@ -62,17 +64,15 @@ def VCPost():
         myUUID = DID.genUUID()
         try:
             did = vc['did']
-            credentialSubject = vc['credentialSubject']
-        except Exception:
             try :
-                buyID = vc['buyID']
-                buySample = DIDSAMPLE.loadBuySample(buyID)
-                did = buySample['did']
-                credentialSubject = buySample['credentialSubject']
+                buyID = vc['credentialSubject']['buyID']
+                credentialSubject = DIDSAMPLE.ROLE['holder']['credentialSubject']['jejuPass']
             except Exception:
-                LOGE("[Issuer] 2. VC POST - 에러 발생 %s" % vc)
-                status = 400
-                return HTTPResponse(status=status)
+                credentialSubject = vc['credentialSubject']
+        except Exception:
+            LOGE("[Issuer] 2. VC POST - 에러 발생 %s" % vc)
+            status = 400
+            return HTTPResponse(status=status)
         DID.saveCredentialSubject(myUUID, credentialSubject)
         challenge = DID.generateChallenge()
         documentURL = DIDSAMPLE.getDIDDocumentURL(did)
@@ -156,8 +156,6 @@ def buyPost():
     try:
         buyInfo = json.loads(request.body.read())
         buyID = DID.genUUID()
-        #did = buyInfo['did']
-        #credentialSubject = buyInfo['credentialSubject']
         DIDSAMPLE.saveBuySample(buyID, buyInfo)
         status = 200
         LOGW("[Issuer] 0. Buy JejuPass. buyID : %s, buyInfo : %s" % (buyID, buyInfo))
