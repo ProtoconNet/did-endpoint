@@ -18,7 +18,7 @@ ROLE = {
         "privateKey_SSH" : "TODO",
         "publicKey" : "3rfrZgGZHXpjiGr1m3SKAbZSktYudfJCBsoJm4m1XUgp",
         "secret" : "ExsNKhvF3pqwDvFaVaiQnWWdyeVwxd",
-        "host" : "mtm.securekim.com",
+        "host" : "127.0.0.1",
         "port" : 3333
     },
     "holder" : {
@@ -31,7 +31,7 @@ ROLE = {
         }
     },
     "verifier" :{
-        "host" : "mtm.securekim.com",
+        "host" : "127.0.0.1",
         "port" : 3082,
         "secret" : "securekim"
     },

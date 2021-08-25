@@ -8,3 +8,5 @@ uuid
 sentry_sdk
 cherrypy
 cryptography
+Image
+pytesseract

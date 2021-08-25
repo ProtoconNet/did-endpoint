@@ -20,7 +20,9 @@ setup(
         'uuid',
         'sentry_sdk',
         'cherrypy',
-        'cryptography'
+        'cryptography',
+        'Image',
+        'pytesseract'
     ],
     packages         = find_packages('./src', exclude=[]),
     keywords         = ['did-endpoint'],

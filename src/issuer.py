@@ -90,7 +90,7 @@ def VCPost():
         except Exception :
             #FOR PYJWT LEGACY
             str_jwt = encoded_jwt
-            status = 401
+            status = 200
     except Exception as ex :
         LOGE(ex)
         LOGW("[Issuer] 2. DID AUTH - VC Post에서 Exception 발생")
