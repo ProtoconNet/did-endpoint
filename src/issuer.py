@@ -94,7 +94,7 @@ def VCPost():
     except Exception as ex :
         LOGE(ex)
         LOGW("[Issuer] 2. DID AUTH - VC Post에서 Exception 발생")
-        status = 404
+        status = 403
         return HTTPResponse(status=status)
     DID.saveUUIDStatus(myUUID, True)
     return HTTPResponse(json.dumps({"payload": challenge, "endPoint":_ISSUER_URL+"/response"}), status=status, headers={'Authorization':str_jwt})
@@ -123,7 +123,7 @@ def res():
         DID.saveUUIDStatus(jwt['uuid'], False)
         LOGE(ex)
         LOGW("[Issuer] 3. DID AUTH - Verify : ERROR : 사인 검증 실패 : %s" % signature)
-        status = 400
+        status = 403
     return HTTPResponse(json.dumps({"Response": challengeRet}), status=status, headers={})
 
 def VCGet(vcType):
@@ -131,7 +131,7 @@ def VCGet(vcType):
         jwt = DID.getVerifiedJWT(request, _ISSUER_SECRET)
         myUUID = jwt['uuid']
         if DID.loadUUIDStatus(myUUID) == False:
-            status = 401
+            status = 404
             return HTTPResponse(status=status, headers={})
         credentialSubject = DID.loadCredentialSubject(myUUID)
         # Todo : Change 'makeSampleVCwithoutJWS' to 'makeVC'
@@ -142,12 +142,12 @@ def VCGet(vcType):
         status = 200
     except Exception as ex :
         LOGE(ex)
-        status = 404
+        status = 400
         try:
             DID.saveUUIDStatus(myUUID, False)
         except Exception as ex :
             LOGE(ex)
-            status = 405
+            status = 401
         return HTTPResponse(status=status, headers={})
     LOGW("[Issuer] 4. VC Issuance - %s" % vc)
     return HTTPResponse(json.dumps({"Response":True, "VC": vc}), status=status, headers={})
@@ -162,7 +162,7 @@ def buyPost():
         return HTTPResponse(json.dumps({"Response":True, "buyID": buyID}), status=status, headers={})
     except Exception as ex:
         LOGE(ex)
-        status = 400    
+        status = 402    
         return HTTPResponse(json.dumps({"Response":False}), status=status, headers={})
 
 def buyGet():
