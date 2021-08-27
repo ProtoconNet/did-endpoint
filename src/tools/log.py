@@ -1,6 +1,10 @@
 import logging
+from logging.handlers import RotatingFileHandler
 import sentry_sdk
 from sentry_sdk.integrations.logging import LoggingIntegration
+
+#100 MB
+log_max_size = 100 * 1024 * 1024 
 
 _level = {
     "debug" : logging.DEBUG,
@@ -16,8 +20,13 @@ def __get_logger(level, logfile):
         '%(levelname)s#%(asctime)s#%(message)s >> @file::%(filename)s@line::%(lineno)s')
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(formatter)
+    rotatingHandler = RotatingFileHandler(
+        filename=logfile, 
+        maxBytes=log_max_size)
+    __logger.addHandler(rotatingHandler)
     __logger.addHandler(stream_handler)
     __logger.setLevel(_level[level])
+   
     logging.basicConfig(filename=logfile,level=_level[level])
     return __logger
 
