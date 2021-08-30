@@ -10,3 +10,4 @@ cherrypy
 cryptography
 Image
 pytesseract
+pytest

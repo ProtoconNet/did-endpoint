@@ -4,7 +4,6 @@ rm $sampleFile
 git pull
 if [ -f "$sampleFile" ]; then
 	echo "file exist"
-	#sed -e s/"127.0.0.1"/"mtm.securekim.com"/g test.txt > test.txt.tmp && mv test.txt.tmp test.txt
 	sed -e s/"127.0.0.1"/"mtm.securekim.com"/g $sampleFile > $sampleFile.tmp && mv $sampleFile.tmp $sampleFile
 else
 	echo "file not exist"

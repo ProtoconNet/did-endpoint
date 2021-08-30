@@ -22,7 +22,8 @@ setup(
         'cherrypy',
         'cryptography',
         'Image',
-        'pytesseract'
+        'pytesseract',
+        'pytest'
     ],
     packages         = find_packages('./src', exclude=[]),
     keywords         = ['did-endpoint'],
