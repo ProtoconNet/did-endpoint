@@ -84,6 +84,7 @@ def VPPost():
     except Exception as ex :
         status = 400
         LOGE(ex)
+        LOGE(vp)
         LOGW("[Verifier] 2-1. VP Post에서 Exception 발생")
         return HTTPResponse(status=status)
     DID.saveUUIDStatus(myUUID, True)

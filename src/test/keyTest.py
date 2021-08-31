@@ -10,7 +10,12 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from tools import did as DID
 from configs import samples as DIDSAMPLE
 
-#signing_key, verifying_key = ed25519.create_keypair()
+sk,vk = ed25519.create_keypair(entropy=os.urandom)
+vk = sk.get_verifying_key()
+base58.b58encode(vk.vk_s)
+
+## 방법 : sk 에서 뒤쪽 반 짤라서 버린걸 base58 돌리면 개인키됨
+## 공개키는 base58.b58encode(vk.vk_s)
 
 privateKeyB58 = "4YUNdokj58dyuRQpuoFY2WwCNG47Ermka5XoSFfjhdqZ"
 privateKeyHex = '34a30441507a5c0d38e12cc8d98771b2f5384ea33d42ef96c49805aee021f4b0' #  base58.b58decode(privateKeyB58).hex()
@@ -39,7 +44,6 @@ publickeySSH = publicKeyOBJ.public_bytes(encoding=Encoding.OpenSSH, format=Publi
 #OR
 # TESTED
 publickeyPEM = publicKeyOBJ.public_bytes(encoding=Encoding.PEM, format=PublicFormat.SubjectPublicKeyInfo) 
-
 
 
 #### EXAMPLE : https://gist.github.com/kousu/f3174af57e1fc42a0a88586b5a5ffdc9
@@ -92,3 +96,13 @@ vp['proof'][0]["jws"] = vpJWS
 
 ## VERIFY VP
 #DID.verifyVP(vp, publicKeyB58)
+
+
+privateKeyB58_2 = "4CtnviPnQX6CyHajqyEik8RZpxTx1mJHRhgNJ2uCTVA4"
+publicKeyB58_2 =  "BY4xsAjAhfhFQpak5W99epnX5NQXd3WK9rWMYKrRYvw4"
+
+vcArr = [{"VC1KEY":"VC1VALUES"}, {"VC2KEY":"VC2VALUES"}]
+vp = DIDSAMPLE.makeSampleVPwithoutJWS("did:mtm:ExsNKhvF3pqwDvFaVaiQnWWdyeVwxd", vcArr)
+vpJWS = DID.makeJWS_jwtlib(vp, privateKeyB58_2)
+vp['proof'][0]["jws"] = vpJWS
+DID.verifyVP(vp, publicKeyB58_2)

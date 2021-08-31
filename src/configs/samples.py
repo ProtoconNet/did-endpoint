@@ -23,8 +23,8 @@ ROLE = {
     },
     "holder" : {
         "did" : "did:mtm:ExsNKhvF3pqwDvFaVaiQnWWdyeVwxd",
-        "privateKey" : "4YUNdokj58dyuRQpuoFY2WwCNG47Ermka5XoSFfjhdqZ",
-        "publicKey" : "3rfrZgGZHXpjiGr1m3SKAbZSktYudfJCBsoJm4m1XUgp",
+        "privateKey" : "4CtnviPnQX6CyHajqyEik8RZpxTx1mJHRhgNJ2uCTVA4",
+        "publicKey" : "BY4xsAjAhfhFQpak5W99epnX5NQXd3WK9rWMYKrRYvw4",
         "credentialSubject" : { 
             'driverLicense' : {'selfie':'/9j/4AAQSkZJRgABAQAASABIAAD/.....','name':'Gil-dong','amount': 3,'buyAt': getTime()},
             'jejuPass' : {'startDate':'2021-09-25T00:00:00.000', 'day':5, 'passType':'RestaurantOnly'}
