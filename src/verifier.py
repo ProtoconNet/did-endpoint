@@ -56,6 +56,7 @@ def VPPost():
         challenge = DID.generateChallenge()
         documentURL = DIDSAMPLE.ROLE['platform']['urls']['document']+"?did="+did
         holder_pubkey = DID.getPubkeyFromDIDDocument(documentURL)
+        print(vp)
         if holder_pubkey == None:
             status = 404
             LOGE("[Issuer] 2. DID AUTH - Document Get 에러 발생 %s" % documentURL)
@@ -84,7 +85,6 @@ def VPPost():
     except Exception as ex :
         status = 400
         LOGE(ex)
-        LOGE(vp)
         LOGW("[Verifier] 2-1. VP Post에서 Exception 발생")
         return HTTPResponse(status=status)
     DID.saveUUIDStatus(myUUID, True)

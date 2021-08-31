@@ -51,9 +51,18 @@ def test_SaveAndLoad_UUIDStatus_Success():
     load = DID.loadUUIDStatus(uuid)
     assert load == "TEST"
 
-def test_makeAndVerifyVC_Success():
+def test_makeAndVerifyVC_DRIVER_Success():
     credentialSubject = test_SaveAndLoad_CredentialSubject_Success()
     vcType = DIDSAMPLE.getVCType('vc1')
+    vc = DIDSAMPLE.makeSampleVCwithoutJWS(DIDSAMPLE.ROLE['issuer']['did'], vcType, credentialSubject)
+    jws = DID.makeJWS_jwtlib(vc, DIDSAMPLE.ROLE['issuer']['privateKey'])
+    vc['proof']["jws"] = jws
+    DID.verifyVC(vc, DIDSAMPLE.ROLE['issuer']['publicKey'])
+    return vc
+
+def test_makeAndVerifyVC_JEJUPASS_Success():
+    credentialSubject = test_SaveAndLoad_CredentialSubject_Success()
+    vcType = DIDSAMPLE.getVCType('vc2')
     vc = DIDSAMPLE.makeSampleVCwithoutJWS(DIDSAMPLE.ROLE['issuer']['did'], vcType, credentialSubject)
     jws = DID.makeJWS_jwtlib(vc, DIDSAMPLE.ROLE['issuer']['privateKey'])
     vc['proof']["jws"] = jws
@@ -78,7 +87,15 @@ def test_makeAndVerifyVC_OtherString_Fail():
     jws = DID.makeJWS_jwtlib(vc, DIDSAMPLE.ROLE['issuer']['privateKey'])
     vc['proof']["test"] = "Fail"
     vc['proof']["jws"] = jws
-    print("%s" % vc)
     with pytest.raises(Exception, match=r".* PROBLEM"):
         DID.verifyVC(vc, DIDSAMPLE.ROLE['issuer']['publicKey'])
     return vc
+
+def test_makeAndVerifyVP_Success():
+    driverVC = test_makeAndVerifyVC_DRIVER_Success()
+    jejuPassVC = test_makeAndVerifyVC_JEJUPASS_Success()
+    vp = DIDSAMPLE.makeSampleVPwithoutJWS(DIDSAMPLE.ROLE['holder']['did'], [driverVC, jejuPassVC])
+    vpJWS = DID.makeJWS_jwtlib(vp, DIDSAMPLE.ROLE['holder']['privateKey'])
+    vp['proof'][0]["jws"] = vpJWS
+    DID.verifyVP(vp, DIDSAMPLE.ROLE['holder']['publicKey'])
+    vcs = DID.getVCSFromVP(vp)
