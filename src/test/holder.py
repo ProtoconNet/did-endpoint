@@ -51,7 +51,7 @@ VCPost = data['VCPost']
 # 2.[POST] Req : DID & VC
 URL = VCPost
 data = {'did': DIDSAMPLE.ROLE['holder']['did'],
-'credentialSubject':DIDSAMPLE.ROLE['holder']['credentialSubject']['driverLicense']} 
+'credentialSubject':{'driver’s license':'12312452tslkdrjgdfjsaklerjklajwekr'}} 
 response = requests.post(URL, data=json.dumps(data))
 if response.status_code >= 400 :
     LOGE("ERROR : %s" % response.status_code)

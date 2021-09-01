@@ -8,7 +8,9 @@ from bottle import response, request, HTTPResponse
 import jwt
 from tools import did as DID
 from tools import log as DIDLOG
+from tools import tool
 from configs import samples as DIDSAMPLE
+
 try :
     # Monitoring :
     from configs import privates as DIDPRIVATE
@@ -64,11 +66,14 @@ def VCPost():
         myUUID = DID.genUUID()
         try:
             did = vc['did']
-            try :
-                buyID = vc['credentialSubject']['buyID']
+            # TODO : FOR SAMPLE
+            credentialSubject = vc['credentialSubject']
+            existBuyID = tool.isExistKeyInObj('buyID', credentialSubject)
+            if existBuyID:
                 credentialSubject = DIDSAMPLE.ROLE['holder']['credentialSubject']['jejuPass']
-            except Exception:
-                credentialSubject = vc['credentialSubject']
+            existDriverLicense = tool.isExistKeyInObj('driver’s license', credentialSubject)
+            if existDriverLicense:
+                credentialSubject = DIDSAMPLE.ROLE['holder']['credentialSubject']['driverLicense']
         except Exception:
             LOGE("[Issuer] 2. VC POST - 에러 발생 %s" % vc)
             status = 400

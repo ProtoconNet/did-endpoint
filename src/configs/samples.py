@@ -26,7 +26,7 @@ ROLE = {
         "privateKey" : "4YUNdokj58dyuRQpuoFY2WwCNG47Ermka5XoSFfjhdqZ",#"4CtnviPnQX6CyHajqyEik8RZpxTx1mJHRhgNJ2uCTVA4",
         "publicKey" : "3rfrZgGZHXpjiGr1m3SKAbZSktYudfJCBsoJm4m1XUgp",#"BY4xsAjAhfhFQpak5W99epnX5NQXd3WK9rWMYKrRYvw4",
         "credentialSubject" : { 
-            'driverLicense' : {'selfie':'/9j/4AAQSkZJRgABAQAASABIAAD/.....','name':'Gil-dong','amount': 3,'buyAt': getTime()},
+            'driverLicense' : {'name':'Audrey','birth': '2000/01/02','driverLicense': '13-10-662761-82'},
             'jejuPass' : {'startDate':'2021-09-25T00:00:00.000', 'day':5, 'passType':'RestaurantOnly'}
         }
     },
