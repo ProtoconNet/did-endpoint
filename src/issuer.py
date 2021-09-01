@@ -73,7 +73,7 @@ def VCPost():
             if existBuyID:
                 credentialSubject = DIDSAMPLE.ROLE['holder']['credentialSubject']['jejuPass']
             existDriverLicense = tool.isExistKeyInObj('driver’s license', credentialSubject)
-            if existDriverLicense and credentialSubject['driver’s license'] == '':
+            if existDriverLicense: # and credentialSubject['driver’s license'] == '':
                 credentialSubject = DIDSAMPLE.ROLE['holder']['credentialSubject']['driverLicense']
             #####################
 
