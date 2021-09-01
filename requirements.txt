@@ -1,13 +1,13 @@
 bottle
 canister
-pyjwt
+pyjwt>=2.0.0
 ed25519
 base58
 requests
 uuid
 sentry_sdk
 cherrypy
-cryptography
-Image
+cryptography>=3.3.1,<4.0.0
+image
 pytesseract
 pytest

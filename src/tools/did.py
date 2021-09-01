@@ -138,7 +138,8 @@ def verifyVP(vp, publicKeyB58):
     dumpedVPB64 = base64.urlsafe_b64encode(dumpedVP)
     dumpedVPB64decoded = dumpedVPB64.decode("utf-8").rstrip("=")
     return verifyJWS(jws, dumpedVPB64decoded, publicKeyB58)
-    #2. TODO : VERIFY ISSUER
+    #2. TODO : VERIFY EXPIRE
+    
 
 def verifyJWS(jws, bodyB64, publicKeyB58):
     try :

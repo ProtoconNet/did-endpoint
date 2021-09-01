@@ -21,7 +21,7 @@ setup(
         'sentry_sdk',
         'cherrypy',
         'cryptography',
-        'Image',
+        'image',
         'pytesseract',
         'pytest'
     ],
