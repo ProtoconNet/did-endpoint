@@ -66,14 +66,17 @@ def VCPost():
         myUUID = DID.genUUID()
         try:
             did = vc['did']
-            # TODO : FOR SAMPLE
             credentialSubject = vc['credentialSubject']
+            
+            # TODO : FOR SAMPLE
             existBuyID = tool.isExistKeyInObj('buyID', credentialSubject)
             if existBuyID:
                 credentialSubject = DIDSAMPLE.ROLE['holder']['credentialSubject']['jejuPass']
             existDriverLicense = tool.isExistKeyInObj('driver’s license', credentialSubject)
-            if existDriverLicense:
+            if existDriverLicense and credentialSubject['driver’s license'] == '':
                 credentialSubject = DIDSAMPLE.ROLE['holder']['credentialSubject']['driverLicense']
+            #####################
+
         except Exception:
             LOGE("[Issuer] 2. VC POST - 에러 발생 %s" % vc)
             status = 400
