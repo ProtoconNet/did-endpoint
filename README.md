@@ -12,7 +12,7 @@
   </p>
 </p>
 
-Tooling that automates your Decentralized-Identifier interactions to process DID Auth and VC issuance with holder on Issuer implemented in Python.
+Tooling that automates your Decentralized-Identifier interactions to process DID Auth and VC issuance with holder on Issuer & Verifier implemented in Python.
 
 ## Identities
 
@@ -55,16 +55,14 @@ LOG = {
 ## Run
 
 ```sh
-cd src
 
-python issuer.py &
+./start.sh
+
 ```
 
 ## TEST
 
 ```sh
-cd test
-
-python holder.py
+pytest
 ```
 
