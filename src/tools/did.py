@@ -115,7 +115,7 @@ def makeJWS_jwtlib(body,privateKeyB58):
     except Exception as ex:
         print(ex)
         print("YOU SHOULD INSTALL pyjwt >= 2.0.0 for EdDSA. 'pip install pyjwt==2'")
-        return ex
+        raise ex
     return jws
 
 def getDIDFromVC(vc):
@@ -129,6 +129,7 @@ def verifyVC(vc, publicKeyB58):
     dumpedVP = json.dumps(vc, separators=(',', ':')).encode('utf8')
     dumpedVPB64 = base64.urlsafe_b64encode(dumpedVP)
     dumpedVPB64decoded = dumpedVPB64.decode("utf-8").rstrip("=")
+    vc['proof']['jws'] = jws
     return verifyJWS(jws, dumpedVPB64decoded, publicKeyB58)
 
 def verifyVP(vp, publicKeyB58):
@@ -137,14 +138,19 @@ def verifyVP(vp, publicKeyB58):
     dumpedVP = json.dumps(vp, separators=(',', ':')).encode('utf8')
     dumpedVPB64 = base64.urlsafe_b64encode(dumpedVP)
     dumpedVPB64decoded = dumpedVPB64.decode("utf-8").rstrip("=")
+    vp['proof'][0]['jws'] = jws
     return verifyJWS(jws, dumpedVPB64decoded, publicKeyB58)
     #2. TODO : VERIFY EXPIRE
     
 
 def verifyJWS(jws, bodyB64, publicKeyB58):
-    try :
+    try:
         publicKeyOBJ = Ed25519PublicKey.from_public_bytes(base58.b58decode(publicKeyB58))
         publickeySSH = publicKeyOBJ.public_bytes(encoding=Encoding.OpenSSH, format=PublicFormat.OpenSSH) 
+    except Exception as ex:
+        print(ex)
+        raise Exception("FAIL - verifyJWS - KEY PROBLEM")
+    try:
         jwsArr = jws.split(".")
         header = jwsArr[0]
         tmpBody = jwsArr[1]
@@ -154,13 +160,14 @@ def verifyJWS(jws, bodyB64, publicKeyB58):
         else :
             body = tmpBody
         restructuredJWS = header + "." + body + "." + signature
-        try : 
-            decoded = jwt.decode(restructuredJWS, publickeySSH, algorithms="EdDSA")
-        except Exception as ex:
-            print(ex)
-            raise Exception("FAIL - verifyJWS - EN/DECRYPT PROBLEM")
-    except Exception:
-        raise Exception("FAIL - verifyJWS - FORMAT PROBLEM")
+    except Exception as ex:
+        print(ex)
+        raise Exception("FAIL - verifyJWS - Split and Restructure")
+    try : 
+        decoded = jwt.decode(restructuredJWS, publickeySSH, algorithms="EdDSA")
+    except Exception as ex:
+        print(ex)
+        raise Exception("FAIL - verifyJWS - EN/DECRYPT PROBLEM")
     return decoded
 
 def getVerifiedJWT(request, secret):

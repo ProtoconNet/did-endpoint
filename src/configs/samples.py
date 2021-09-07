@@ -13,7 +13,7 @@ def addTime(addDay):
 
 ROLE = {
     "issuer" :{
-        "did" :"did:mtm:3rfrZgGZHXpjiGr1m3SKAbZSktYudfJCBsoJm4m1XUgp",
+        "did" :"did:mtm:test_issuer",
         "privateKey" : "4YUNdokj58dyuRQpuoFY2WwCNG47Ermka5XoSFfjhdqZ",
         "privateKey_SSH" : "TODO",
         "publicKey" : "3rfrZgGZHXpjiGr1m3SKAbZSktYudfJCBsoJm4m1XUgp",
@@ -22,9 +22,9 @@ ROLE = {
         "port" : 3333
     },
     "holder" : {
-        "did" : "did:mtm:ExsNKhvF3pqwDvFaVaiQnWWdyeVwxd",
-        "privateKey" : "4YUNdokj58dyuRQpuoFY2WwCNG47Ermka5XoSFfjhdqZ",#"4CtnviPnQX6CyHajqyEik8RZpxTx1mJHRhgNJ2uCTVA4",
-        "publicKey" : "3rfrZgGZHXpjiGr1m3SKAbZSktYudfJCBsoJm4m1XUgp",#"BY4xsAjAhfhFQpak5W99epnX5NQXd3WK9rWMYKrRYvw4",
+        "did" : "did:mtm:test_holder",
+        "privateKey" : "4CtnviPnQX6CyHajqyEik8RZpxTx1mJHRhgNJ2uCTVA4",
+        "publicKey" : "BY4xsAjAhfhFQpak5W99epnX5NQXd3WK9rWMYKrRYvw4",
         "credentialSubject" : { 
             'driverLicense' : {'name':'Audrey','birth': '2000/01/02','driverLicense': '13-10-662761-82'},
             'jejuPass' : {'startDate':'2021-09-25T00:00:00.000', 'day':5, 'passType':'RestaurantOnly'}
