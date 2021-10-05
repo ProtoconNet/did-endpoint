@@ -3,8 +3,10 @@ import json
 import bottle
 import canister
 import cherrypy
-from bottle import response, request, HTTPResponse
+from bottle import response, request, route, run, static_file, HTTPResponse
 import jwt
+import os
+from os.path import join, dirname
 from tools import did as DID
 from tools import log as DIDLOG
 from configs import samples as DIDSAMPLE
@@ -141,6 +143,14 @@ def postVP1():
 def getVP1():
     return VPGet()
     
+@route('/')
+def server_static():
+    return static_file("dashboard.html", root=os.path.dirname(__file__)+"/ui")
+
+@route('/<filename:path>')
+def download(filename):
+    return static_file(filename, root=os.path.dirname(__file__)+"/ui", download=False)
+
 if __name__ == "__main__":
     cherrypy.tree.graft(app, '/')
     cherrypy.config.update({
@@ -149,3 +159,4 @@ if __name__ == "__main__":
         'server.thread_pool': 30
     })
     cherrypy.server.start()
+    run(host='0.0.0.0', port=8080)
