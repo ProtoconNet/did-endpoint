@@ -1,15 +1,17 @@
   
 from setuptools import setup, find_packages
+with open("README.md", "r") as fh:
+    long_description = fh.read()
 
 setup(
     name             = 'did-endpoint',
     version          = '0.1',
     description      = 'did-endpoint python',
-    long_description = open('README.md').read(),
+    long_description = long_description,
+    long_description_content_type = "text/markdown",
     author           = 'securekim',
     author_email     = 'admin@securekim.com',
     license          = "GPLv3",
-    package_dir      = {'':'./src'},
     install_requires = [
         'bottle',
         'canister',

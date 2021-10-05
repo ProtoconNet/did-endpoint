@@ -1,0 +1,11 @@
+<svg width="95" height="22" xmlns="http://www.w3.org/2000/svg">
+    <g fill="none" fill-rule="evenodd">
+        <rect stroke="#581CC8" fill="#FFF" x=".5" y=".5" width="94" height="21" rx="10.5"/>
+        <text font-family="NotoSansKR-Regular, Noto Sans KR" font-size="12" fill="#581CC8">
+                                <tspan x="30" y="15">제주패스</tspan>
+                            </text>
+        <circle fill="#FF5F18" cx="12" cy="11" r="7"/>
+        <path stroke="#FFF" stroke-width="1.5" stroke-linecap="round" d="M12 6.895v5.053"/>
+        <circle fill="#FFF" cx="12" cy="15" r="1"/>
+    </g>
+</svg>

@@ -1,0 +1,13 @@
+base58
+bottle
+canister
+cherrypy
+cryptography
+ed25519
+image
+pyjwt
+pytesseract
+pytest
+requests
+sentry_sdk
+uuid
