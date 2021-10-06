@@ -3,6 +3,8 @@
         <link rel="stylesheet" href="css/index.css">
         <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js" integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
         <script src="http://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
+        <script src="js/socketio.js"></script>
         <script src="js/index.js"></script>
     </head>
     <body >
@@ -52,7 +54,7 @@
                 class="iconVP-list-selected"  >
                     <span style="margin-top:-10px;" class="menuSpan">
                         요청 목록</span>
-                        <span id="requestNumber" style="float:right; color: #581cc8; margin : 10px 23px 0px 0px;">14</span>
+                        <span id="requestNumber" style="float:right; color: #581cc8; margin : 10px 23px 0px 0px;"></span>
                 </div>
                 <div class = "rightSection ">
                     <div class="Main-banner">
@@ -93,9 +95,7 @@
                                     2021년 10월 3일(일)
                                 </span>
                             </span>
-                            <span class="Subtitle2">
-                                14(3+)
-                            </span>
+                            <span class="Subtitle2" id = "requestNumber2"></span>
                           </div>
                           <div class="subBanner">
 

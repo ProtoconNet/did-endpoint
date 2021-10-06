@@ -8,7 +8,6 @@ import jwt
 import os
 from flask import Flask, render_template, send_from_directory
 from flask_socketio import SocketIO
-from bottle import static_file, template
 
 from os.path import join, dirname
 from tools import did as DID
@@ -27,6 +26,23 @@ LOGI = LOG.info
 LOGD = LOG.debug
 LOGW = LOG.warning
 LOGE = LOG.error
+
+_REQUEST_LIST = [
+    {"result":0, "name":'위근호',   "context":'유효하지 않은 운전면허증입니다. (+1)', "verify":[1,0,0], "date": '10월 1일'},
+    {"result":0, "name":'위근호',   "context":'운전면허증 유효기간이 지났습니다.',    "verify":[1,0,1], "date":'10월 1일'},
+    {"result":1, "name":'위근호',   "context":'고객 정보 검증이 완료되었습니다.',     "verify":[1,1,1], "date": '10월 1일'},
+    {"result":1, "name":'Audrey', "context":'고객 정보 검증이 완료되었습니다.',    "verify":[1,1,1], "date":'10월 2일'},
+    {"result":0, "name":'Audrey', "context":'DID 인증을 실패하였습니다.',       "verify":[0,1,1], "date":'10월 3일'},
+    {"result":1, "name":'Audrey', "context":'고객 정보 검증이 완료되었습니다.',    "verify":[1,1,1], "date":'10월 3일'},
+    {"result":0, "name":'Audrey', "context":'제주패스의 유효기간이 지났습니다.',    "verify": [1,1,0],"date":  '10월 3일'},
+    {"result":0, "name":'Audrey', "context":'유효하지 않은 운전면허증입니다. (+1)',"verify":[1,0,0], "date":'10월 3일'},
+    {"result":0, "name":'Audrey', "context":'운전면허증 유효기간이 지났습니다.',    "verify": [1,0,1],"date":  '10월 4일'},
+    {"result":1, "name":'Audrey', "context":'고객 정보 검증이 완료되었습니다.',    "verify":[1,1,1], "date":'10월 4일'},
+    {"result":1, "name":'Audrey', "context":'고객 정보 검증이 완료되었습니다.',    "verify":[1,1,1], "date":'10월 5일'},
+    {"result":0, "name":'Audrey', "context":'DID 인증을 실패하였습니다.',       "verify":[0,1,1],  "date":'10월 5일'},
+    {"result":1, "name":'Audrey', "context":'고객 정보 검증이 완료되었습니다.',    "verify":[1,1,1],  "date":'10월 6일'},
+    {"result":0, "name":'Audrey', "context":'제주패스의 유효기간이 지났습니다.',    "verify":[1,1], "date":  '10월 7일'}
+]
 
 
 ############### WEB & SOCKET IO ################
@@ -69,14 +85,18 @@ def VPPost():
         myUUID = DID.genUUID()
         did = data['did']
         vp = data['vp']
+        result = 0
+        verify = []
         challenge = DID.generateChallenge()
         documentURL = DIDSAMPLE.ROLE['platform']['urls']['document']+"?did="+did
         holder_pubkey = DID.getPubkeyFromDIDDocument(documentURL)
-        print(vp)
+        name = vp['verifiableCredential'][0]['credentialSubject']['name']
         if holder_pubkey == None:
             status = 404
             LOGE("[Issuer] 2. DID AUTH - Document Get 에러 발생 %s" % documentURL)
-            socketio.emit('broadcasting',"404", broadcast=True)
+            rowData = {"name":name, "status":status, "result":result, "verify":verify}
+            _REQUEST_LIST.append(rowData)
+            socketio.emit('broadcasting',rowData, broadcast=True)
             return HTTPResponse(status=status)
         encoded_jwt = jwt.encode({"uuid": myUUID, "pubkey":holder_pubkey, "challenge":challenge}, _VERIFIER_SECRET, algorithm="HS256")
         try:
@@ -86,17 +106,21 @@ def VPPost():
             str_jwt = encoded_jwt
         DID.verifyVP(vp, holder_pubkey)
         vcs = DID.getVCSFromVP(vp)
+        verify.append(1)
         for vc in vcs:
             try:
                 vcdid = DID.getDIDFromVC(vc)
                 vcurl = DIDSAMPLE.getDIDDocumentURL(vcdid)
                 vcpubkey = DID.getPubkeyFromDIDDocument(vcurl)
                 DID.verifyVC(vc, vcpubkey)
+                verify.append(1)
             except Exception as ex :
                 status = 401
                 LOGE("[Verifier] 2-0. FAIL - Verify VC.")
                 LOGE(ex)
-                socketio.emit('broadcasting',"401", broadcast=True)
+                rowData = {"name":name, "status":status, "result":result, "verify":verify}
+                _REQUEST_LIST.append(rowData)
+                socketio.emit('broadcasting',rowData, broadcast=True)
                 return HTTPResponse(status=status)
         LOGW("[Verifier] 2-1. Verify VC, VP - VP Post(%s) : 생성한 챌린지(%s), DID Document의 공개키(%s), Holder에게 JWT 발급(%s)." 
         % (vp, challenge, holder_pubkey, encoded_jwt))
@@ -104,11 +128,16 @@ def VPPost():
         status = 400
         LOGE(ex)
         LOGW("[Verifier] 2-1. VP Post에서 Exception 발생")
-        socketio.emit('broadcasting',"400", broadcast=True)
+        rowData = {"name":name, "status":status, "result":result, "verify":verify}
+        _REQUEST_LIST.append(rowData)
+        socketio.emit('broadcasting',rowData, broadcast=True)
         return HTTPResponse(status=status)
     DID.saveUUIDStatus(myUUID, True)
     status = 200
-    socketio.emit('broadcasting',"200", broadcast=True)
+    result = 1
+    rowData = {"name":name, "status":status, "result":result, "verify":verify, "context":"고객 정보 검증이 완료되었습니다."}
+    _REQUEST_LIST.append(rowData)
+    socketio.emit('broadcasting',rowData, broadcast=True)
     return HTTPResponse(json.dumps({"payload": challenge, "endPoint":_VERIFIER_URL+"/response"}), status=status, headers={'Authorization':str_jwt})
 
 @app.get('/response')
@@ -163,12 +192,16 @@ def getVP1():
     
 @appFlask.route('/')
 def routeIndex():
-    socketio.emit('broadcasting', "broadcasting", broadcast=True)
+    #socketio.emit('initList', _REQUEST_LIST, broadcast=True)
     return render_template("dashboard.html")
 
 @appFlask.route("/<path:path>")
 def static_dir(path):
     return send_from_directory(templateDir, path)
+
+@socketio.on('initList')
+def handle_my_custom_event(json, methods=['GET', 'POST']):
+    socketio.emit('initList', _REQUEST_LIST)
 
 if __name__ == "__main__":
     cherrypy.tree.graft(app, '/')
