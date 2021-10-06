@@ -25,7 +25,10 @@ setup(
         'cryptography',
         'image',
         'pytesseract',
-        'pytest'
+        'pytest',
+        'python-socketio',
+        'python-engineio',
+        'flask-socketio'
     ],
     packages         = find_packages('./src', exclude=[]),
     keywords         = ['did-endpoint'],

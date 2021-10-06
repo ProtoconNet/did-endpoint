@@ -1,0 +1,33 @@
+<html>
+<head>
+    <title>Socketio chat</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
+</head>
+<body>
+<textarea rows="20" cols="30" id="chat"></textarea><br>
+<input type="text" id="user"></input>
+<input type="button" value="msg submit" onclick="myOnClick()"></input>
+
+<script>
+    var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+    socket.emit('joinRoom', {roomName: 'myroom'});
+
+    socket.on('recMsg', function (data) {
+        console.log(data.comment)
+        $('#chat').append(data.comment);
+    });
+    
+    socket.on('broadcasting', function (data) {
+        console.log(data)
+        $('#chat').append(data);
+    });
+
+    function myOnClick() {
+        socket.emit("reqMsg", {comment: $('#user').val()});
+        $('#user').val('');
+    }
+</script>
+</body>
+</html>

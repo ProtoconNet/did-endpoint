@@ -11,3 +11,6 @@ cryptography>=3.3.1,<4.0.0
 image
 pytesseract
 pytest
+python-socketio==4.6.0
+python-engineio==3.13.2
+flask-socketio==4.3.1

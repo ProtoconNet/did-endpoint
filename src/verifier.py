@@ -6,11 +6,9 @@ import cherrypy
 from bottle import response, request, route, run, static_file, HTTPResponse
 import jwt
 import os
-import asyncio;
-import websockets;
-from gevent import spawn, joinall
-import time
-from multiprocessing import Process
+from flask import Flask, render_template, send_from_directory
+from flask_socketio import SocketIO
+from bottle import static_file, template
 
 from os.path import join, dirname
 from tools import did as DID
@@ -29,6 +27,15 @@ LOGI = LOG.info
 LOGD = LOG.debug
 LOGW = LOG.warning
 LOGE = LOG.error
+
+
+############### WEB & SOCKET IO ################
+templateDir = os.path.dirname(__file__) + "/ui"
+appFlask = Flask(__name__, template_folder=templateDir, static_folder=templateDir)
+appFlask.config['SECRET_KEY'] = 'securekim'
+socketio = SocketIO(appFlask)
+socketio.init_app(appFlask, cors_allowed_origins="*")
+###########################################
 
 app = bottle.Bottle()
 app.install(canister.Canister())
@@ -69,7 +76,7 @@ def VPPost():
         if holder_pubkey == None:
             status = 404
             LOGE("[Issuer] 2. DID AUTH - Document Get 에러 발생 %s" % documentURL)
-            websockets.broadcast(websockets, "404")
+            socketio.emit('broadcasting',"404", broadcast=True)
             return HTTPResponse(status=status)
         encoded_jwt = jwt.encode({"uuid": myUUID, "pubkey":holder_pubkey, "challenge":challenge}, _VERIFIER_SECRET, algorithm="HS256")
         try:
@@ -89,7 +96,7 @@ def VPPost():
                 status = 401
                 LOGE("[Verifier] 2-0. FAIL - Verify VC.")
                 LOGE(ex)
-                websockets.broadcast(websockets, "401")
+                socketio.emit('broadcasting',"401", broadcast=True)
                 return HTTPResponse(status=status)
         LOGW("[Verifier] 2-1. Verify VC, VP - VP Post(%s) : 생성한 챌린지(%s), DID Document의 공개키(%s), Holder에게 JWT 발급(%s)." 
         % (vp, challenge, holder_pubkey, encoded_jwt))
@@ -97,11 +104,11 @@ def VPPost():
         status = 400
         LOGE(ex)
         LOGW("[Verifier] 2-1. VP Post에서 Exception 발생")
-        websockets.broadcast(websockets, "400")
+        socketio.emit('broadcasting',"400", broadcast=True)
         return HTTPResponse(status=status)
     DID.saveUUIDStatus(myUUID, True)
     status = 200
-    websockets.broadcast(websockets, "200")
+    socketio.emit('broadcasting',"200", broadcast=True)
     return HTTPResponse(json.dumps({"payload": challenge, "endPoint":_VERIFIER_URL+"/response"}), status=status, headers={'Authorization':str_jwt})
 
 @app.get('/response')
@@ -154,44 +161,16 @@ def postVP1():
 def getVP1():
     return VPGet()
     
-@route('/')
-def server_static():
-    global USERS
-    return static_file("dashboard.html", root=os.path.dirname(__file__)+"/ui")
+@appFlask.route('/')
+def routeIndex():
+    socketio.emit('broadcasting', "broadcasting", broadcast=True)
+    return render_template("dashboard.html")
 
-@route('/<filename:path>')
-def download(filename):
-    global USERS
-    websockets.broadcast(USERS, filename)
-    print(filename)
-    return static_file(filename, root=os.path.dirname(__file__)+"/ui", download=False)
+@appFlask.route("/<path:path>")
+def static_dir(path):
+    return send_from_directory(templateDir, path)
 
-
-############### WEBSOCKETS ################
-
-
-async def socketHandler(websocket, path):
-    global USERS
-    USERS.add(websocket)
-    websockets.broadcast(USERS, "HI")
-    try:
-        # Register user
-        USERS.add(websocket)
-        websockets.broadcast(USERS, "HI")
-    #     loop = asyncio.get_event_loop()
-    finally:
-        # Unregister user
-        USERS.remove(websocket)
-
-async def main():
-    global USERS
-    async with websockets.serve(socketHandler, "0.0.0.0", 8081):
-       await asyncio.Future()  # run forever
-
-global USERS
-USERS = set()
 if __name__ == "__main__":
-    #
     cherrypy.tree.graft(app, '/')
     cherrypy.config.update({
         'server.socket_host': '0.0.0.0',
@@ -199,16 +178,7 @@ if __name__ == "__main__":
         'server.thread_pool': 30
     })
     cherrypy.server.start()
-    p2 = Process(target=run, args=(None,'wsgiref','0.0.0.0',_VERIFIER_WEB_PORT))
-    p2.start()
-    p = Process(target=asyncio.run, args=(main(),))
-    p.start()
-    # p2.join()
-    # p.join()
-    
-
-    #run(host='0.0.0.0', port=_VERIFIER_WEB_PORT)
-    #asyncio.run(main())
+    socketio.run(appFlask, host='0.0.0.0', port=8080)
 
 
 
