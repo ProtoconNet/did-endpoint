@@ -33,7 +33,8 @@ ROLE = {
     "verifier" :{
         "host" : "127.0.0.1",
         "port" : 3082,
-        "secret" : "securekim"
+        "secret" : "securekim",
+        "webPort" : 8080
     },
     "platform" :{
         'url' : 'http://mitum.securekim.com:8080',
