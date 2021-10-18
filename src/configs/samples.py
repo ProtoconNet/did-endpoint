@@ -41,9 +41,58 @@ ROLE = {
         "urls" :{
             "schema" : "http://mitum.securekim.com:8080/v1/schema",
             "resolver" : "https://did-resolver.mitum.com/ddo/",
-            "document" : "http://mitum.securekim.com:8080/v1/DIDDocument"
+            "document" : "http://mitum.securekim.com:8080/v1/DIDDocument",
+            "createSchema" : "http://mitum.securekim.com:8080/v1/schema",
+            "createDefinition" : "http://mitum.securekim.com:8080/v1/definition"
+
         }
     }
+}
+
+_SCHEMA = {
+    "vc1" : { # schemaID
+        "schemaName" : "driverLicense",
+        "version" : "0.1",
+        "attribute" : ["name", "birth", "driverLicense"]
+    },
+    "vc2" : { # schemaID
+        "schemaName" : "jejuPass",
+        "version" : "0.1",
+        "attribute" : ["startDate", "day", "passType"]
+    }
+}
+
+_PRESENTATION_REQEUST= {
+    "requestAttribute" : [
+        {
+            "name" : "driverLicense",
+            "restrictions" : {
+                "schemaId" : "_schemaId",
+                "credDefId" : "_credDefId"
+            },
+            "concealable" : True
+        }, 
+        {
+            "name" : "jejuPass",
+            "restrictions" : {
+                "schemaId" : "_schemaId",
+                "credDefId" : "_credDefId"
+            },
+            "concealable" : True
+        }
+    ],
+    "predicateAttribute" : [{
+        "name":"이번엔 사용 안함",
+        "condition" : "ZKP를 위한 컨디션 (보다 크다, 작다 등등)",
+        "value" : "ZKP를 위한 값",
+        "restrictions" : {
+            "schemaId" : "_schemaId",
+            "credDefId" : "_credDefId"
+        }
+    }],
+    "selfAttestedAttribute": [{
+        "name" : "유저에게 전달받는 추가 정보. 따로 검증은 안함"
+    }]
 }
 
 _VCSCHEMA ={

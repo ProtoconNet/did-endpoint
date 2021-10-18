@@ -13,6 +13,8 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, PublicFormat, NoEncryption
 
+_SCHEMAS = dict()
+_CREDENTIAL_DEFINITIONS = dict()
 _CREDENTIAL_SUBJECTS = dict()
 _UUID_STATUS = dict()
 
@@ -76,6 +78,21 @@ def saveUUIDStatus(uuid, status):
     except Exception:
         return False
 
+def saveSchema(schemaID, schema):
+    try:
+        _SCHEMAS[schemaID] = schema
+        return True
+    except Exception:
+        return False
+
+
+def saveCredentialDefinition(credentialDefinitionId, credentialDefinition):
+    try:
+        _CREDENTIAL_DEFINITIONS[credentialDefinitionId] = credentialDefinition
+        return True
+    except Exception:
+        return False
+
 def loadUUIDStatus(uuid):
     try:
         return _UUID_STATUS[uuid]
@@ -86,6 +103,26 @@ def loadCredentialSubject(uuid):
     try:
         credentialSubject = _CREDENTIAL_SUBJECTS[uuid]
         return credentialSubject
+    except Exception:
+        return None
+
+def loadSchema(schemaID):
+    try:
+        schema = _SCHEMAS[schemaID]
+        return schema
+    except Exception:
+        return None
+
+def loadAttributes(did, schemaID, credDefID):
+    schema = loadSchema(schemaID)
+    credDef = loadCredentialDefinition(credDefID)
+    #TODO 이 정보를 토대로 DID에 해당하는 정보들을 채워서 전달 해 주어야 한다.
+    # 현재는 샘플로 진행한다.
+
+def loadCredentialDefinition(credentialDefinitionId):
+    try:
+        credentialDefinition = _CREDENTIAL_DEFINITIONS[credentialDefinitionId]
+        return credentialDefinition
     except Exception:
         return None
 
