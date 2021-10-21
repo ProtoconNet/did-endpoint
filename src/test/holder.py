@@ -63,7 +63,7 @@ def didAuth(platform_url):
 def getVC(myJWT, did, schemaID, credentialDefinitionID):
     URL = _ISSUER_URL + DIDSAMPLE.ROLE["issuer"]['urls']['getCredentialProposal']
     data = {
-        'DID': did,
+        'did': did,
         'schemaID':schemaID,
         'creDefId':credentialDefinitionID
         } 
@@ -76,7 +76,7 @@ def getVC(myJWT, did, schemaID, credentialDefinitionID):
     ################### NEED USER CONFIRM ##################
     URL = _ISSUER_URL + DIDSAMPLE.ROLE["issuer"]['urls']['getCredentialRequest']
     data = {
-        'DID': did,
+        'did': did,
         'schemaID':schemaID,
         'creDefId':credentialDefinitionID
         } 
@@ -95,7 +95,7 @@ def ackMessage(platform_url, myJWT):
 
 def presentationProposal(myJWT):
     URL = _VERIFIER_URL + DIDSAMPLE.ROLE["verifier"]['urls']['getPresentationProposal']
-    holderDID = { 'DID' : DIDSAMPLE.ROLE['holder']['did'] }
+    holderDID = { 'did' : DIDSAMPLE.ROLE['holder']['did'] }
     response = requests.get(URL, params=holderDID, headers={'Authorization':'Bearer ' + str(myJWT)})
     if response.status_code >= 400 :
         LOGE("ERROR : %s" % response.status_code)

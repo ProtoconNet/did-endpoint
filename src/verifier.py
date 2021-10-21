@@ -143,7 +143,7 @@ def presentationProposal():
     status = 200
     try:
         jwt = DID.getVerifiedJWT(request, _SECRET)
-        did = request.query['DID']
+        did = request.query['did']
         presentationRequest = DIDSAMPLE._PRESENTATION_REQEUST
         return HTTPResponse(json.dumps(presentationRequest), status=status, headers={})
     except Exception as ex :

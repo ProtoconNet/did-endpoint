@@ -167,7 +167,7 @@ def credentialProposal():
         jwt = DID.getVerifiedJWT(request, _SECRET)
         schemaID = request.query['schemaID']
         credefID = request.query['creDefId']
-        did = request.query['DID']
+        did = request.query['did']
         # attributes = DID.loadAttributes(did, schemaID, credefID)
         schema = DID.loadSchema(schemaID)
         vcType = schema["schemaName"] 
@@ -188,7 +188,7 @@ def credentialRequest():
         try:
             schemaID = request.query['schemaID']
             credefID = request.query['credefID']
-            did = request.query['DID']
+            did = request.query['did']
         except Exception :
             status = 404
         # attributes = DID.loadAttributes(did, schemaID, credefID)
