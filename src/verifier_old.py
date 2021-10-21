@@ -78,15 +78,6 @@ def VPSchema():
     LOGW("[Verifier] 1. VP Schema 위치 알려주기 : %s" % (schemaJSON))
     raise HTTPResponse(schemaJSON, status=status, headers={})
 
-
-@app.get('/presentationProposal')
-def presentationProposal():
-    try:
-        did = request.query['did']
-    except Exception as ex :
-        
-    raise HTTPResponse(schemaJSON, status=status, headers={})
-
 def VPPost():
     try:
         status = 400

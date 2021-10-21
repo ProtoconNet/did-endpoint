@@ -56,29 +56,102 @@ socketio.init_app(appFlask, cors_allowed_origins="*")
 app = bottle.Bottle()
 app.install(canister.Canister())
 
-_VERIFIER_HOST = DIDSAMPLE.ROLE['verifier']['host']
-_VERIFIER_PORT = DIDSAMPLE.ROLE['verifier']['port']
-_VERIFIER_WEB_PORT = DIDSAMPLE.ROLE['verifier']['webPort']
-_VERIFIER_SECRET = DIDSAMPLE.ROLE['verifier']['secret']
-_VERIFIER_URL =  "http://"+_VERIFIER_HOST + ":" + str(_VERIFIER_PORT) 
+_HOST = DIDSAMPLE.ROLE['verifier']['host']
+_PORT = DIDSAMPLE.ROLE['verifier']['port']
+_WEB_PORT = DIDSAMPLE.ROLE['verifier']['webPort']
+_SECRET = DIDSAMPLE.ROLE['verifier']['secret']
+_URL =  "http://"+_HOST + ":" + str(_PORT) 
 
-@app.get('/VPSchema')
-def VPSchema():
+@app.get('/urls')
+def urls():
     try:
-        schema = request.query['schema']
-        schemaID = DIDSAMPLE.getVPSchema(schema)
-        schemaJSON = json.dumps(
-            DIDSAMPLE.getVPSchemaJSON(schemaID)
-        )
+        urls = DIDSAMPLE.ROLE['verifier']['urls']
         status = 200
+        LOGW("[Verifier] 1. 모든 위치 알려주기 : %s" % (urls))
+        return HTTPResponse(json.dumps(urls), status=status, headers={})
     except Exception as ex :
         LOGE(ex)
+        status = 404
+        return HTTPResponse(status=status, headers={})
+
+@app.post('/didAuth')
+def DIDAuth(): ########### DID AUTH
+    try:
+        vc = json.loads(request.body.read())
+        myUUID = DID.genUUID()
+        try:
+            did = vc['did']
+        except Exception:
+            LOGE("[Verifier] 2. VC POST - 에러 발생 %s" % vc)
+            status = 400
+            return HTTPResponse(status=status)
+        # DID.saveCredentialSubject(myUUID, credentialSubject)
+        challenge = DID.generateChallenge()
+        documentURL = DIDSAMPLE.getDIDDocumentURL(did)
+        pubkey = DID.getPubkeyFromDIDDocument(documentURL)
+        if pubkey == None:
+            LOGE("[Verifier] 2. DID AUTH - Document Get 에러 발생 %s" % documentURL)
+            status = 404
+            return HTTPResponse(status=status)
+        encoded_jwt = jwt.encode({"uuid": myUUID, "pubkey":pubkey, "challenge":challenge}, _SECRET, algorithm="HS256")
+        LOGW("[Verifier] 2. DID AUTH - VC Post : 생성한 챌린지(%s), DID Document의 공개키(%s), Holder에게 JWT 발급(%s)." 
+        % (challenge, pubkey, encoded_jwt))
+        try:
+            str_jwt = str(encoded_jwt.decode("utf-8"))
+            status = 201
+        except Exception :
+            #FOR PYJWT LEGACY
+            str_jwt = encoded_jwt
+            status = 202
+    except Exception as ex :
+        LOGE(ex)
+        LOGW("[Verifier] 2. DID AUTH - VC Post에서 Exception 발생")
+        status = 403
+        return HTTPResponse(status=status)
+    DID.saveUUIDStatus(myUUID, True)
+    return HTTPResponse(json.dumps({"payload": challenge, "endPoint":_URL+"/response"}), status=203, headers={'Authorization':str_jwt})
+
+@app.get('/response')
+def res():
+    try:
+        signature = request.query['signature']
+        LOGI("[Verifier] 3. DID AUTH - Signature(%s)" % str(signature))
+    except Exception:
         status = 400
         return HTTPResponse(status=status)
-    LOGW("[Verifier] 1. VP Schema 위치 알려주기 : %s" % (schemaJSON))
-    raise HTTPResponse(schemaJSON, status=status, headers={})
+    try:
+        jwt = DID.getVerifiedJWT(request, _SECRET)
+        LOGI("[Verifier] 3. DID AUTH - jwt 결과(%s)" % str(jwt))
+        challengeRet = DID.verifyString(jwt['challenge'] , signature, jwt['pubkey'])
+        if challengeRet == True:
+            LOGW("[Verifier] 3. DID AUTH - Verified : 사인 값(%s) 검증 성공." % signature)
+            status = 200
+        else:
+            DID.saveUUIDStatus(jwt['uuid'], False)
+            LOGW("[Verifier] 3. DID AUTH - Verify : Challenge(%s)의 사인 값(%s)을 pubkey(%s)로 검증 실패." % (jwt['challenge'] , signature, jwt['pubkey']))
+            status = 401
+    except Exception as ex :
+        challengeRet = False
+        DID.saveUUIDStatus(jwt['uuid'], False)
+        LOGE(ex)
+        LOGW("[Verifier] 3. DID AUTH - Verify : ERROR : 사인 검증 실패 : %s" % signature)
+        status = 403
+    return HTTPResponse(json.dumps({"Response": challengeRet}), status=status, headers={})
 
-def VPPost():
+@app.get('/presentationProposal')
+def presentationProposal():
+    status = 200
+    try:
+        jwt = DID.getVerifiedJWT(request, _SECRET)
+        did = request.query['DID']
+        presentationRequest = DIDSAMPLE._PRESENTATION_REQEUST
+        return HTTPResponse(json.dumps(presentationRequest), status=status, headers={})
+    except Exception as ex :
+        status = 400
+        return HTTPResponse(status=status, headers={})
+
+@app.post('/PresentationProof')
+def PresentationProof():
     try:
         status = 400
         data = json.loads(request.body.read())
@@ -98,12 +171,6 @@ def VPPost():
             _REQUEST_LIST.append(rowData)
             socketio.emit('broadcasting',rowData, broadcast=True)
             return HTTPResponse(status=status)
-        encoded_jwt = jwt.encode({"uuid": myUUID, "pubkey":holder_pubkey, "challenge":challenge}, _VERIFIER_SECRET, algorithm="HS256")
-        try:
-            str_jwt = str(encoded_jwt.decode("utf-8"))
-        except Exception :
-            #FOR PYJWT LEGACY
-            str_jwt = encoded_jwt
         DID.verifyVP(vp, holder_pubkey)
         vcs = DID.getVCSFromVP(vp)
         verify.append(1)
@@ -122,8 +189,6 @@ def VPPost():
                 _REQUEST_LIST.append(rowData)
                 socketio.emit('broadcasting',rowData, broadcast=True)
                 return HTTPResponse(status=status)
-        LOGW("[Verifier] 2-1. Verify VC, VP - VP Post(%s) : 생성한 챌린지(%s), DID Document의 공개키(%s), Holder에게 JWT 발급(%s)." 
-        % (vp, challenge, holder_pubkey, encoded_jwt))
     except Exception as ex :
         status = 400
         LOGE(ex)
@@ -138,58 +203,12 @@ def VPPost():
     rowData = {"name":name, "status":status, "result":result, "verify":verify, "context":"고객 정보 검증이 완료되었습니다."}
     _REQUEST_LIST.append(rowData)
     socketio.emit('broadcasting',rowData, broadcast=True)
-    return HTTPResponse(json.dumps({"payload": challenge, "endPoint":_VERIFIER_URL+"/response"}), status=status, headers={'Authorization':str_jwt})
+    return HTTPResponse(json.dumps({"result": True}), status=status)
 
-@app.get('/response')
-def response():
-    try:
-        signature = request.query['signature']
-        LOGI("[Verifier] 3. DID AUTH - Signature(%s)" % str(signature))
-    except Exception:
-        status = 400
-        return HTTPResponse(status=status)
-    try:
-        jwt = DID.getVerifiedJWT(request, _VERIFIER_SECRET)
-        LOGI("[Verifier] 3. DID AUTH - jwt 결과(%s)" % str(jwt))
-        challengeRet = DID.verifyString(jwt['challenge'] , signature, jwt['pubkey'])
-        if challengeRet == True:
-            LOGW("[Verifier] 3. DID AUTH - Verified : 사인 값(%s) 검증 성공." % signature)
-            status = 200
-        else:
-            DID.saveUUIDStatus(jwt['uuid'], False)
-            LOGW("[Verifier] 3. DID AUTH - Verify : Challenge(%s)의 사인 값(%s)을 pubkey(%s)로 검증 실패." % (jwt['challenge'] , signature, jwt['pubkey']))
-            status = 404
-    except Exception as ex :
-        status = 403
-        challengeRet = False
-        DID.saveUUIDStatus(jwt['uuid'], False)
-        LOGE(ex)
-        LOGW("[Verifier] 3. DID AUTH - Verify : ERROR : 사인 검증 실패 : %s" % signature)
-        return HTTPResponse(status=status)
-    return HTTPResponse(json.dumps({"Response": challengeRet}), status=status, headers={})
 
-def VPGet():
-    try:
-        jwt = DID.getVerifiedJWT(request, _VERIFIER_SECRET)
-        if DID.loadUUIDStatus(jwt['uuid']) == False:
-            status = 400
-            return HTTPResponse(status=status)
-    except Exception as ex :
-        LOGE(ex)
-        status = 404
-        return HTTPResponse(status=status)
-    LOGW("[Issuer] 4. Verified VP - %s" % jwt)
-    status = 200
-    return HTTPResponse(json.dumps({"Response":True}), status=status, headers={})
 
-@app.post('/vp1')
-def postVP1():
-    return VPPost()
 
-@app.get('/vp1')
-def getVP1():
-    return VPGet()
-    
+
 @appFlask.route('/')
 def routeIndex():
     #socketio.emit('initList', _REQUEST_LIST, broadcast=True)
@@ -207,7 +226,7 @@ if __name__ == "__main__":
     cherrypy.tree.graft(app, '/')
     cherrypy.config.update({
         'server.socket_host': '0.0.0.0',
-        'server.socket_port': _VERIFIER_PORT,
+        'server.socket_port': _PORT,
         'server.thread_pool': 30
     })
     cherrypy.server.start()

@@ -19,7 +19,14 @@ ROLE = {
         "publicKey" : "3rfrZgGZHXpjiGr1m3SKAbZSktYudfJCBsoJm4m1XUgp",
         "secret" : "ExsNKhvF3pqwDvFaVaiQnWWdyeVwxd",
         "host" : "127.0.0.1",
-        "port" : 3333
+        "port" : 3333,
+        "urls" : {
+            "getDIDAuth" : "/didAuth",
+            "getCredentialProposal" : "/credentialProposal",
+            "getCredentialRequest" : "/credentialRequest",
+            "getAckMessage" : "/ackMessage",
+            "postBuyJejuPass" : "/buyJejuPass"
+        }
     },
     "holder" : {
         "did" : "did:mtm:test_holder",
@@ -34,7 +41,14 @@ ROLE = {
         "host" : "127.0.0.1",
         "port" : 3082,
         "secret" : "securekim",
-        "webPort" : 8080
+        "webPort" : 8080,
+        "urls" : {
+            "webUI" : "/",
+            "getDIDAuth" : "/didAuth",
+            "getPresentationProposal" : "/presentationProposal",
+            "postPresentationProof" : "/PresentationProof",
+            "getAckMessage" : "/ackMessage"
+        }
     },
     "platform" :{
         'url' : 'http://mitum.securekim.com:8080',
@@ -50,15 +64,28 @@ ROLE = {
 }
 
 _SCHEMA = {
-    "vc1" : { # schemaID
+    "schemaID1" : { # schemaID
         "schemaName" : "driverLicense",
         "version" : "0.1",
         "attribute" : ["name", "birth", "driverLicense"]
     },
-    "vc2" : { # schemaID
+    "schemaID2" : { # schemaID
         "schemaName" : "jejuPass",
         "version" : "0.1",
         "attribute" : ["startDate", "day", "passType"]
+    }
+}
+
+_CREDENTIALDEFINITION = {
+    "credentialDefinition1" : { # schemaID
+        "schemaId" : "schemaID1", 
+        "tag" : "driverLicense", 
+        "revocation" : False
+    },
+    "credentialDefinition2" : { # schemaID
+        "schemaId" : "schemaID2", 
+        "tag" : "jejuPass", 
+        "revocation" : False
     }
 }
 
@@ -67,31 +94,31 @@ _PRESENTATION_REQEUST= {
         {
             "name" : "driverLicense",
             "restrictions" : {
-                "schemaId" : "_schemaId",
-                "credDefId" : "_credDefId"
+                "schemaId" : "schemaID1",
+                "credDefId" : "credentialDefinition1"
             },
             "concealable" : True
         }, 
         {
             "name" : "jejuPass",
             "restrictions" : {
-                "schemaId" : "_schemaId",
-                "credDefId" : "_credDefId"
+                "schemaId" : "schemaID2",
+                "credDefId" : "credentialDefinition2"
             },
             "concealable" : True
         }
     ],
     "predicateAttribute" : [{
-        "name":"이번엔 사용 안함",
-        "condition" : "ZKP를 위한 컨디션 (보다 크다, 작다 등등)",
-        "value" : "ZKP를 위한 값",
+        "name":"NONE",
+        "condition" : "ZKP CONDITION",
+        "value" : "VALUE FOR ZKP",
         "restrictions" : {
-            "schemaId" : "_schemaId",
-            "credDefId" : "_credDefId"
+            "schemaId" : "schemaID2",
+            "credDefId" : "credentialDefinition2"
         }
     }],
     "selfAttestedAttribute": [{
-        "name" : "유저에게 전달받는 추가 정보. 따로 검증은 안함"
+        "name" : "NOT VERIFIED"
     }]
 }
 

@@ -5,6 +5,7 @@ import canister
 import cherrypy
 import requests
 from bottle import response, request, HTTPResponse
+from urllib.parse import urlparse, parse_qs
 import jwt
 from tools import did as DID
 from tools import log as DIDLOG
@@ -30,10 +31,10 @@ app.install(canister.Canister())
 
 _ISSUER_DID = DIDSAMPLE.ROLE['issuer']['did']
 _ISSUER_PRIVATEKEY = DIDSAMPLE.ROLE['issuer']['privateKey']
-_ISSUER_SECRET = DIDSAMPLE.ROLE['issuer']['secret']
-_ISSUER_HOST = DIDSAMPLE.ROLE['issuer']['host']
-_ISSUER_PORT = DIDSAMPLE.ROLE['issuer']['port']
-_ISSUER_URL =  "http://"+_ISSUER_HOST + ":" + str(_ISSUER_PORT) 
+_SECRET = DIDSAMPLE.ROLE['issuer']['secret']
+_HOST = DIDSAMPLE.ROLE['issuer']['host']
+_PORT = DIDSAMPLE.ROLE['issuer']['port']
+_URL =  "http://"+_HOST + ":" + str(_PORT) 
 
 def initDID():
     URL = DIDSAMPLE.ROLE['platform']['urls']['document']
@@ -41,47 +42,72 @@ def initDID():
     response = requests.post(URL, data=json.dumps(data))
     LOGI("[Issuer]0. Create DID Document : %s, Data : %s, Response : %s " % (data['id'], data, response))
     buyID = DID.genUUID()
-    #DIDSAMPLE.saveBuySample(buyID, buyInfo)
+    schemaID1 = createSchema(
+        DIDSAMPLE._SCHEMA['schemaID1']['schemaName'], 
+        DIDSAMPLE._SCHEMA['schemaID1']['version'], 
+        DIDSAMPLE._SCHEMA['schemaID1']['attribute'], 
+    )
+    DID.saveSchema("schemaID1", DIDSAMPLE._SCHEMA['schemaID1'])
+    DID.saveSchema("schemaID2", DIDSAMPLE._SCHEMA['schemaID2'])
+    schemaID2 = createSchema(
+        DIDSAMPLE._SCHEMA['schemaID2']['schemaName'], 
+        DIDSAMPLE._SCHEMA['schemaID2']['version'], 
+        DIDSAMPLE._SCHEMA['schemaID2']['attribute'], 
+    )
+    createCredentialDefinition(schemaID1, "schemaID1", False)
+    createCredentialDefinition(schemaID2, "schemaID2", False)
 
+    DID.saveCredentialDefinition("credentialDefinition1", DIDSAMPLE._CREDENTIALDEFINITION['credentialDefinition1'])
+    DID.saveCredentialDefinition("credentialDefinition2", DIDSAMPLE._CREDENTIALDEFINITION['credentialDefinition2'])
 
-@app.get('/VCSchema')
-def VCSchema():
+def createSchema(schemaName, version, attribute):
     try:
-        schema = request.query['schema']
-        schemaID = DIDSAMPLE.getVCSchema(schema)
-        schemaJSON = json.dumps(
-            DIDSAMPLE.getVCSchemaJSON(schemaID)
-        )
+        URL = DIDSAMPLE.ROLE['platform']['urls']['createSchema']
+        data = {schemaName : schemaName, version : version, attribute : attribute}
+        response = requests.post(URL, data=json.dumps(data))
+        DID.saveSchema(response.schemaID, data)
+        LOGI("[Issuer]0-0. Create Schema : %s " % (response))
+        return response.schemaID
+    except Exception:
+        LOGE("[Issuer]0-0. createSchema : ")
+        return "schemaID"
+    
+def createCredentialDefinition(schemaID, tag, revocation):
+    try : 
+        URL = DIDSAMPLE.ROLE['platform']['urls']['createDefinition']
+        data = {schemaID : schemaID, tag : tag, revocation : revocation}
+        response = requests.post(URL, data=json.dumps(data))
+        LOGI("[Issuer]0-1. Create Definition : %s " % (response))
+        DID.saveCredentialDefinition(response.credDefID, data)
+        return response.credDefID
+    except Exception:
+        LOGE("[Issuer]0-1. Create Definition : ")
+        return "credentialDefinition"
+
+@app.get('/urls')
+def urls():
+    try:
+        urls = DIDSAMPLE.ROLE['issuer']['urls']
         status = 200
+        LOGW("[Issuer] 1. 모든 위치 알려주기 : %s" % (urls))
+        return HTTPResponse(json.dumps(urls), status=status, headers={})
     except Exception as ex :
         LOGE(ex)
         status = 404
         return HTTPResponse(status=status, headers={})
-    LOGW("[Issuer] 1. VC Schema 위치 알려주기 : %s" % (schemaJSON))
-    return HTTPResponse(schemaJSON, status=status, headers={})
 
-def VCPost():
+@app.post('/didAuth')
+def DIDAuth(): ########### DID AUTH
     try:
         vc = json.loads(request.body.read())
         myUUID = DID.genUUID()
         try:
             did = vc['did']
-            credentialSubject = vc['credentialSubject']
-            
-            # TODO : FOR SAMPLE
-            existBuyID = tool.isExistKeyInObj('buyID', credentialSubject)
-            if existBuyID:
-                credentialSubject = DIDSAMPLE.ROLE['holder']['credentialSubject']['jejuPass']
-            existDriverLicense = tool.isExistKeyInObj('driver’s license', credentialSubject)
-            if existDriverLicense: # and credentialSubject['driver’s license'] == '':
-                credentialSubject = DIDSAMPLE.ROLE['holder']['credentialSubject']['driverLicense']
-            #####################
-
         except Exception:
             LOGE("[Issuer] 2. VC POST - 에러 발생 %s" % vc)
             status = 400
             return HTTPResponse(status=status)
-        DID.saveCredentialSubject(myUUID, credentialSubject)
+        # DID.saveCredentialSubject(myUUID, credentialSubject)
         challenge = DID.generateChallenge()
         documentURL = DIDSAMPLE.getDIDDocumentURL(did)
         pubkey = DID.getPubkeyFromDIDDocument(documentURL)
@@ -89,23 +115,23 @@ def VCPost():
             LOGE("[Issuer] 2. DID AUTH - Document Get 에러 발생 %s" % documentURL)
             status = 404
             return HTTPResponse(status=status)
-        encoded_jwt = jwt.encode({"uuid": myUUID, "pubkey":pubkey, "challenge":challenge}, _ISSUER_SECRET, algorithm="HS256")
-        LOGW("[Issuer] 2. DID AUTH - VC Post(%s) : 생성한 챌린지(%s), DID Document의 공개키(%s), Holder에게 JWT 발급(%s)." 
-        % (credentialSubject, challenge, pubkey, encoded_jwt))
+        encoded_jwt = jwt.encode({"uuid": myUUID, "pubkey":pubkey, "challenge":challenge}, _SECRET, algorithm="HS256")
+        LOGW("[Issuer] 2. DID AUTH - VC Post : 생성한 챌린지(%s), DID Document의 공개키(%s), Holder에게 JWT 발급(%s)." 
+        % (challenge, pubkey, encoded_jwt))
         try:
             str_jwt = str(encoded_jwt.decode("utf-8"))
-            status = 200
+            status = 201
         except Exception :
             #FOR PYJWT LEGACY
             str_jwt = encoded_jwt
-            status = 200
+            status = 202
     except Exception as ex :
         LOGE(ex)
         LOGW("[Issuer] 2. DID AUTH - VC Post에서 Exception 발생")
         status = 403
         return HTTPResponse(status=status)
     DID.saveUUIDStatus(myUUID, True)
-    return HTTPResponse(json.dumps({"payload": challenge, "endPoint":_ISSUER_URL+"/response"}), status=status, headers={'Authorization':str_jwt})
+    return HTTPResponse(json.dumps({"payload": challenge, "endPoint":_URL+"/response"}), status=203, headers={'Authorization':str_jwt})
 
 @app.get('/response')
 def res():
@@ -116,7 +142,7 @@ def res():
         status = 400
         return HTTPResponse(status=status)
     try:
-        jwt = DID.getVerifiedJWT(request, _ISSUER_SECRET)
+        jwt = DID.getVerifiedJWT(request, _SECRET)
         LOGI("[Issuer] 3. DID AUTH - jwt 결과(%s)" % str(jwt))
         challengeRet = DID.verifyString(jwt['challenge'] , signature, jwt['pubkey'])
         if challengeRet == True:
@@ -134,17 +160,68 @@ def res():
         status = 403
     return HTTPResponse(json.dumps({"Response": challengeRet}), status=status, headers={})
 
-def VCGet(vcType):
+@app.get('/credentialProposal')
+def credentialProposal():
+    status = 404
     try:
-        jwt = DID.getVerifiedJWT(request, _ISSUER_SECRET)
+        jwt = DID.getVerifiedJWT(request, _SECRET)
+        schemaID = request.query['schemaID']
+        credefID = request.query['creDefId']
+        did = request.query['DID']
+        # attributes = DID.loadAttributes(did, schemaID, credefID)
+        schema = DID.loadSchema(schemaID)
+        vcType = schema["schemaName"] 
+        attributes  = DIDSAMPLE.ROLE['holder']['credentialSubject'][vcType]
+        #vcSample = DIDSAMPLE.makeSampleVCwithoutJWS(_ISSUER_DID, vcType, attributes)
+        status = 200
+        return HTTPResponse(json.dumps({"Response":True, "credentialAttributeValueList": attributes}), status=status, headers={})
+    except Exception as ex :
+        status = 400
+        return HTTPResponse(status=status, headers={})
+    
+
+@app.get('/credentialRequest')
+def credentialRequest():
+    status = 400
+    try:
+        jwt = DID.getVerifiedJWT(request, _SECRET)
+        try:
+            schemaID = request.query['schemaID']
+            credefID = request.query['credefID']
+            did = request.query['DID']
+        except Exception :
+            status = 404
+        # attributes = DID.loadAttributes(did, schemaID, credefID)
+        schema = DID.loadSchema(schemaID)
+        vcType = schema["schemaName"] 
+        attributes  = DIDSAMPLE.ROLE['holder']['credentialSubject'][vcType]
+        vc = DIDSAMPLE.makeSampleVCwithoutJWS(_ISSUER_DID, vcType, attributes)
+        jws = DID.makeJWS_jwtlib(vc, _ISSUER_PRIVATEKEY)
+        vc['proof']["jws"] = jws
+        status = 200
+        return HTTPResponse(json.dumps({"Response":True, "VC": vc}), status=status, headers={})
+    except Exception as ex :
+        return HTTPResponse(status=status, headers={})
+
+@app.get('/ackMessage')
+def ack():
+    status = 400
+    try:
+        jwt = DID.getVerifiedJWT(request, _SECRET)
+        status = 200
+        return HTTPResponse(json.dumps({"Response":True}), status=status, headers={})
+    except Exception as ex :
+        return HTTPResponse(status=status, headers={})
+
+def VCGet(vcType): ## getCredentialProposal
+    try:
+        jwt = DID.getVerifiedJWT(request, _SECRET)
         myUUID = jwt['uuid']
         if DID.loadUUIDStatus(myUUID) == False:
             status = 404
             return HTTPResponse(status=status, headers={})
         credentialSubject = DID.loadCredentialSubject(myUUID)
-        # Todo : Change 'makeSampleVCwithoutJWS' to 'makeVC'
         vc = DIDSAMPLE.makeSampleVCwithoutJWS(_ISSUER_DID, vcType , credentialSubject)
-        #jws = DID.makeJWS(vc, _ISSUER_PRIVATEKEY)
         jws = DID.makeJWS_jwtlib(vc, _ISSUER_PRIVATEKEY)
         vc['proof']["jws"] = jws
         status = 200
@@ -160,6 +237,7 @@ def VCGet(vcType):
     LOGW("[Issuer] 4. VC Issuance - %s" % vc)
     return HTTPResponse(json.dumps({"Response":True, "VC": vc}), status=status, headers={})
 
+@app.post('/buyJejuPass')
 def buyPost():
     try:
         buyInfo = json.loads(request.body.read())
@@ -182,13 +260,14 @@ def buyGet():
         status = 404
         return HTTPResponse(json.dumps({"result":False}), status=status, headers={})
 
-@app.post('/vc1')
-def postVC1():
-    return VCPost()
 
-@app.post('/vc2')
-def postVC2():
-    return VCPost()
+# @app.post('/vc1')
+# def postVC1():
+#     return VCPost()
+
+# @app.post('/vc2')
+# def postVC2():
+#     return VCPost()
 
 @app.get('/vc1')
 def getVC1():
@@ -207,12 +286,12 @@ def buyPassGet():
     return buyGet()
 
 if __name__ == "__main__":
-    #app.run(host='0.0.0.0', port=_ISSUER_PORT)
+    #app.run(host='0.0.0.0', port=_PORT)
     initDID()
     cherrypy.tree.graft(app, '/')
     cherrypy.config.update({
         'server.socket_host': '0.0.0.0',
-        'server.socket_port': _ISSUER_PORT,
+        'server.socket_port': _PORT,
         'server.thread_pool': 30
     })
     cherrypy.server.start()

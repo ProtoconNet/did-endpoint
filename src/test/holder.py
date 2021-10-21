@@ -25,149 +25,122 @@ LOGD = LOG.debug
 LOGW = LOG.warning
 LOGE = LOG.error
 
-_url = "http://"+ DIDSAMPLE.ROLE['issuer']['host'] + ":" + str(DIDSAMPLE.ROLE['issuer']['port'])
-
+_ISSUER_URL = "http://"+ DIDSAMPLE.ROLE['issuer']['host'] + ":" + str(DIDSAMPLE.ROLE['issuer']['port'])
+_VERIFIER_URL = "http://"+ DIDSAMPLE.ROLE['verifier']['host'] + ":" + str(DIDSAMPLE.ROLE['verifier']['port'])
 app = bottle.Bottle()
 app.install(canister.Canister())
 ############## VC Issuance - DRIVER LICENSE ##############
 
-# 0. [POST] Req : Create DID Document
-URL = DIDSAMPLE.ROLE['platform']['urls']['document']
+def createDIDDocument():
+    # 0. [POST] Req : Create DID Document
+    URL = DIDSAMPLE.ROLE['platform']['urls']['document']
+    data = DIDSAMPLE.makeSampleDIDDocument("holder", "Ed25519VerificationKey2018")
+    response = requests.post(URL, data=json.dumps(data))
+    LOGI("[Holder] Create DID Document : %s, VC Data : %s" % (data['id'], data))
 
-data = DIDSAMPLE.makeSampleDIDDocument("holder", "Ed25519VerificationKey2018")
-response = requests.post(URL, data=json.dumps(data))
-LOGI("[Holder] Create DID Document : %s, VC Data : %s" % (data['id'], data))
+def didAuth(platform_url):
+    #1 DID AUTH 0 - sending DID
+    URL = platform_url + DIDSAMPLE.ROLE["issuer"]['urls']['getDIDAuth']
+    data = {'did': DIDSAMPLE.ROLE['holder']['did']} 
+    response = requests.post(URL, data=json.dumps(data))
+    if response.status_code >= 400 :
+        LOGE("ERROR : %s" % response.status_code)
+    myJWT = response.headers.get('Authorization')
+    LOGI("[Holder] DID : %s, JWT : %s" % (data['did'], myJWT))
 
-# 1.[GET] Req : VC Schema location
-URL = _url+'/VCSchema?schema=driverLicense' 
-response = requests.get(URL) 
-if response.status_code >= 400 :
-    LOGE("ERROR : %s" % response.status_code)
-LOGI("[Holder] VC Schema 위치 : %s : %s" % (response.status_code, response.text))
-data = json.loads(response.text)
-VCGet = data['VCGet']
-VCPost = data['VCPost']
+    data = json.loads(response.text)
+    signature = DID.signString(data['payload'], DIDSAMPLE.ROLE['holder']['privateKey'])
 
-# 2.[POST] Req : DID & VC
-URL = VCPost
-data = {'did': DIDSAMPLE.ROLE['holder']['did'],
-'credentialSubject':{'driver’s license':''}} 
-response = requests.post(URL, data=json.dumps(data))
-if response.status_code >= 400 :
-    LOGE("ERROR : %s" % response.status_code)
-myJWT = response.headers.get('Authorization')
-LOGI("[Holder] DID : %s, VC Data : %s, JWT : %s" % (data['did'], data, myJWT))
+    #2 DID AUTH 1 - Sending signedPayload
+    URL = data['endPoint'] + '?signature='+signature 
+    response = requests.get(URL, headers={'Authorization':'Bearer ' + str(myJWT)}) 
+    if response.status_code >= 400 :
+        LOGE("ERROR : %s" % response.status_code)
+    LOGI("[Holder] RESULT OF DID Auth : %s" % response.text)
+    return myJWT
 
-data = json.loads(response.text)
-signature = DID.signString(data['payload'], DIDSAMPLE.ROLE['holder']['privateKey'])
 
-# 3.[GET] Req : Challenge & Response 
-URL = data['endPoint'] + '?signature='+signature 
-response = requests.get(URL, headers={'Authorization':'Bearer ' + str(myJWT)}) 
-if response.status_code >= 400 :
-    LOGE("ERROR : %s" % response.status_code)
-LOGI("[Holder] DID Auth 결과 : %s" % response.text)
+def getVC(myJWT, did, schemaID, credentialDefinitionID):
+    URL = _ISSUER_URL + DIDSAMPLE.ROLE["issuer"]['urls']['getCredentialProposal']
+    data = {
+        'DID': did,
+        'schemaID':schemaID,
+        'creDefId':credentialDefinitionID
+        } 
+    response = requests.get(URL, params=(data), headers={'Authorization':'Bearer ' + str(myJWT)})
+    if response.status_code >= 400 :
+        LOGE("ERROR : %s" % response.status_code)
+    preview = json.loads(response.text)['credentialAttributeValueList']
+    LOGI("[Holder] PREVIEW - VC : %s" % response.text)
 
-# 4.[GET] Req : VC
-URL = VCGet
-response = requests.get(URL, headers={'Authorization':'Bearer ' + str(myJWT)}) 
-if response.status_code >= 400 :
-    LOGE("ERROR : %s" % response.status_code)
-LOGI("[Holder] VC 발급 결과 : %s" % response.text)
-VC_driverLicense = json.loads(response.text)['VC']
+    ################### NEED USER CONFIRM ##################
+    URL = _ISSUER_URL + DIDSAMPLE.ROLE["issuer"]['urls']['getCredentialRequest']
+    data = {
+        'DID': did,
+        'schemaID':schemaID,
+        'creDefId':credentialDefinitionID
+        } 
+    response = requests.get(URL, params=(data), headers={'Authorization':'Bearer ' + str(myJWT)})
+    vc = json.loads(response.text)['VC']
+    return vc
 
-############## VC Issuance - JEJU PASS ##############
-# 
-# 0.[POST] req : Buy Jejupass
-URL = _url+'/jejuPass' 
-data = {'did': DIDSAMPLE.ROLE['holder']['did'],
-'credentialSubject':DIDSAMPLE.ROLE['holder']['credentialSubject']['jejuPass']} 
-response = requests.post(URL, data=json.dumps(data))
-if response.status_code >= 400 :
-    LOGE("ERROR : %s" % response.status_code)
-data = json.loads(response.text)
-buyID = data['buyID']
+def ackMessage(platform_url, myJWT):
+    URL = platform_url + DIDSAMPLE.ROLE["issuer"]['urls']['getAckMessage']
+    response = requests.get(URL, headers={'Authorization':'Bearer ' + str(myJWT)}) 
+    if response.status_code >= 400 :
+        LOGE("ERROR : %s" % response.status_code)
 
-# 1.[GET] Req : VC Schema location - jejuPass
-URL = _url+'/VCSchema?schema=jejuPass' 
-response = requests.get(URL) 
-if response.status_code >= 400 :
-    LOGE("ERROR : %s" % response.status_code)
-LOGI("[Holder] VC Schema 위치 : %s : %s" % (response.status_code, response.text))
-data = json.loads(response.text)
-VCGet = data['VCGet']
-VCPost = data['VCPost']
-
-# 2.[POST] Req : DID & VC
-URL = VCPost
-data = {'did':DIDSAMPLE.ROLE['holder']['did'], 'credentialSubject':{"buyID":buyID}}
-response = requests.post(URL, data=json.dumps(data))
-if response.status_code >= 400 :
-    LOGE("ERROR : %s" % response.status_code)
-myJWT = response.headers.get('Authorization')
-LOGI("[Holder] JWT : %s" % (myJWT))
-
-data = json.loads(response.text)
-signature = DID.signString(data['payload'], DIDSAMPLE.ROLE['holder']['privateKey'])
-
-# 3.[GET] Req : Challenge & Response 
-URL = data['endPoint'] + '?signature='+signature 
-response = requests.get(URL, headers={'Authorization':'Bearer ' + str(myJWT)}) 
-if response.status_code >= 400 :
-    LOGE("ERROR : %s" % response.status_code)
-LOGI("[Holder] DID Auth 결과 : %s" % response.text)
-
-# 4.[GET] Req : VC
-URL = VCGet
-response = requests.get(URL, headers={'Authorization':'Bearer ' + str(myJWT)}) 
-if response.status_code >= 400 :
-    LOGE("ERROR : %s" % response.status_code)
-LOGI("[Holder] VC 발급 결과 : %s" % response.text)
-VC_jejuPass = json.loads(response.text)['VC']
 
 ############## VP - JEJU PASS, DRIVER LICENSE ##############
-# 
 
-_url = "http://"+ DIDSAMPLE.ROLE['verifier']['host'] + ":" + str(DIDSAMPLE.ROLE['verifier']['port'])
+def presentationProposal(myJWT):
+    URL = _VERIFIER_URL + DIDSAMPLE.ROLE["verifier"]['urls']['getPresentationProposal']
+    holderDID = { 'DID' : DIDSAMPLE.ROLE['holder']['did'] }
+    response = requests.get(URL, params=holderDID, headers={'Authorization':'Bearer ' + str(myJWT)})
+    if response.status_code >= 400 :
+        LOGE("ERROR : %s" % response.status_code)
+    #LOGI("[Holder] DID : %s, PresentationRequest : %s, JWT : %s" % (holderDID, response.text, myJWT))
+    return response.text
 
-# 1.[GET] Req : VP Schema location
-URL = _url+'/VPSchema?schema=rentCar' 
-response = requests.get(URL) 
-if response.status_code >= 400 :
-    LOGE("ERROR : %s" % response.status_code)
-LOGI("[Holder] VP : %s : %s" % (response.status_code, response.text))
-data = json.loads(response.text)
-VPGet = data['VPGet']
-VPPost = data['VPPost']
+def presentationProof(myJWT, vcArr):
+    # 2.[POST] Req : DID & VP
+    holderDID = DIDSAMPLE.ROLE['holder']['did']
+    vp = DIDSAMPLE.makeSampleVPwithoutJWS(holderDID, vcArr)
+    vpJWS = DID.makeJWS_jwtlib(vp, DIDSAMPLE.ROLE['holder']['privateKey'])
+    vp['proof'][0]["jws"] = vpJWS
+    URL = _VERIFIER_URL + DIDSAMPLE.ROLE["verifier"]['urls']['postPresentationProof']
+    data = {'did': DIDSAMPLE.ROLE['holder']['did'], 'vp':vp} 
+    response = requests.post(URL, data=json.dumps(data), headers={'Authorization':'Bearer ' + str(myJWT)})
+    if response.status_code >= 400 :
+        LOGE("ERROR : %s" % response.status_code)
+    LOGI("[Holder] RESULT OF VP VERIFICATION: %s" % response.text)
 
-# 2.[POST] Req : DID & VP
-vcArr = [VC_driverLicense, VC_jejuPass]
-holderDID = DIDSAMPLE.ROLE['holder']['did']
-vp = DIDSAMPLE.makeSampleVPwithoutJWS(holderDID, vcArr)
-vpJWS = DID.makeJWS_jwtlib(vp, DIDSAMPLE.ROLE['holder']['privateKey'])
-vp['proof'][0]["jws"] = vpJWS
+######################################################################
 
-URL = VPPost
-data = {'did': DIDSAMPLE.ROLE['holder']['did'], 'vp':vp} 
-response = requests.post(URL, data=json.dumps(data))
-if response.status_code >= 400 :
-    LOGE("ERROR : %s" % response.status_code)
-myJWT = response.headers.get('Authorization')
-LOGI("[Holder] DID : %s, VP Data : %s, JWT : %s" % (data['did'], data, myJWT))
+createDIDDocument()
+myJWT = didAuth(_ISSUER_URL)
+vc_driverLicense = getVC(
+    myJWT,
+    DIDSAMPLE.ROLE['holder']['did'], 
+    "schemaID1",
+    "credentialDefinition1"
+    )
+LOGI("[Holder] USER CONFIRMATION : OK")
+ackMessage(_ISSUER_URL, myJWT)
+myJWT = didAuth(_ISSUER_URL)
+vc_jejuPass = getVC(
+    myJWT,
+    DIDSAMPLE.ROLE['holder']['did'], 
+    "schemaID2",
+    "credentialDefinition2"
+    )
+LOGI("[Holder] USER CONFIRMATION : OK")
+ackMessage(_ISSUER_URL, myJWT)
 
-data = json.loads(response.text)
-signature = DID.signString(data['payload'], DIDSAMPLE.ROLE['holder']['privateKey'])
+myJWT = didAuth(_ISSUER_URL)
+vpPresentation = presentationProposal(myJWT)
 
-# 3.[GET] Req : Challenge & Response 
-URL = data['endPoint'] + '?signature='+signature 
-response = requests.get(URL, headers={'Authorization':'Bearer ' + str(myJWT)}) 
-if response.status_code >= 400 :
-    LOGE("ERROR : %s" % response.status_code)
-LOGI("[Holder] DID Auth 결과 : %s" % response.text)
+LOGI("[Holder] READY FOR VP : %s" % vpPresentation)
 
-# 4.[GET] Req : VP
-URL = VPGet
-response = requests.get(URL, headers={'Authorization':'Bearer ' + str(myJWT)}) 
-if response.status_code >= 400 :
-    LOGE("ERROR : %s" % response.status_code)
-LOGI("[Holder] VP 결과 : %s" % response.text)
+vcArr = [vc_driverLicense, vc_jejuPass]
+presentationProof(myJWT, vcArr)
