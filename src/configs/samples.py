@@ -43,10 +43,11 @@ ROLE = {
         "port" : 3082,
         "secret" : "securekim",
         "webPort" : 8080,
+        "challenge" : "THISISHARDCODEDCHALLENGEFORTEST_",
         "urls" : {
             "didAuth" : "/didAuth",
             "getPresentationProposal" : "/presentationProposal",
-            "postPresentationProof" : "/PresentationProof",
+            "postPresentationProof" : "/presentationProof",
             "getAckMessage" : "/ackMessage"
         }
     },

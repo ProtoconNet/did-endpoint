@@ -99,6 +99,13 @@ def loadUUIDStatus(uuid):
     except Exception:
         return False
 
+def deleteUUIDStatus(uuid):
+    try:
+        del _UUID_STATUS[uuid]
+        return True
+    except Exception:
+        return False
+
 def loadCredentialSubject(uuid):
     try:
         credentialSubject = _CREDENTIAL_SUBJECTS[uuid]
@@ -211,16 +218,16 @@ def getVerifiedJWT(request, secret):
     try :
         encoded_jwt = request.headers.get('Authorization')
     except Exception:
-        return "NO Authorization"
+        raise "NO Authorization"
     try :
         encoded_jwt = encoded_jwt.split(" ")[1] # FROM Bearer
     except Exception:
-        return "NO Bearer : " + str(encoded_jwt)
+        raise "NO Bearer : " + str(encoded_jwt)
     try :
         decoded_jwt = jwt.decode(encoded_jwt, secret, algorithms=["HS256"])
         return decoded_jwt
-    except Exception:
-        return "JWT verify failed"
+    except :
+        raise "JWT verify failed. Maybe It is caused by undefined jwt"
 
 def getPubkeyFromDIDDocument(documentURL):
     try:

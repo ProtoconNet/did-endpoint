@@ -62,6 +62,14 @@ _WEB_PORT = DIDSAMPLE.ROLE['verifier']['webPort']
 _SECRET = DIDSAMPLE.ROLE['verifier']['secret']
 _URL =  "http://"+_HOST + ":" + str(_PORT) 
 
+def checkJWT():
+    try:
+        jwt = DID.getVerifiedJWT(request, _SECRET)
+        myUUID = jwt['uuid']
+        return DID.loadUUIDStatus(myUUID)
+    except:
+        return False
+
 @app.get('/urls')
 def urls():
     try:
@@ -77,16 +85,19 @@ def urls():
 @app.post('/didAuth')
 def DIDAuth(): ########### DID AUTH
     try:
-        vc = json.loads(request.body.read())
+        data = json.loads(request.body.read())
         myUUID = DID.genUUID()
         try:
-            did = vc['did']
+            did = data['did']
         except Exception:
-            LOGE("[Verifier] 2. VC POST - 에러 발생 %s" % vc)
+            LOGE("[Verifier] 1. didAuth - 에러 발생 %s" % data)
             status = 400
             return HTTPResponse(status=status)
         # DID.saveCredentialSubject(myUUID, credentialSubject)
-        challenge = DID.generateChallenge()
+        if did == DIDSAMPLE.ROLE["holder"]["did"]:
+            challenge = DIDSAMPLE.ROLE["verifier"]["challenge"] # FOR TEST
+        else:
+            challenge = DID.generateChallenge()
         documentURL = DIDSAMPLE.getDIDDocumentURL(did)
         pubkey = DID.getPubkeyFromDIDDocument(documentURL)
         if pubkey == None:
@@ -120,6 +131,8 @@ def res():
         status = 400
         return HTTPResponse(status=status)
     try:
+        if checkJWT() == False:
+            return HTTPResponse(status=410, headers={})
         jwt = DID.getVerifiedJWT(request, _SECRET)
         LOGI("[Verifier] 3. DID AUTH - jwt 결과(%s)" % str(jwt))
         challengeRet = DID.verifyString(jwt['challenge'] , signature, jwt['pubkey'])
@@ -130,19 +143,21 @@ def res():
             DID.saveUUIDStatus(jwt['uuid'], False)
             LOGW("[Verifier] 3. DID AUTH - Verify : Challenge(%s)의 사인 값(%s)을 pubkey(%s)로 검증 실패." % (jwt['challenge'] , signature, jwt['pubkey']))
             status = 401
+        return HTTPResponse(json.dumps({"Response": challengeRet}), status=status, headers={})
     except Exception as ex :
         challengeRet = False
         DID.saveUUIDStatus(jwt['uuid'], False)
         LOGE(ex)
         LOGW("[Verifier] 3. DID AUTH - Verify : ERROR : 사인 검증 실패 : %s" % signature)
         status = 403
-    return HTTPResponse(json.dumps({"Response": challengeRet}), status=status, headers={})
+        return HTTPResponse(json.dumps({"Response": challengeRet}), status=status, headers={})
 
 @app.get('/presentationProposal')
 def presentationProposal():
     status = 200
     try:
-        jwt = DID.getVerifiedJWT(request, _SECRET)
+        if checkJWT() == False:
+            return HTTPResponse(status=410, headers={})
         did = request.query['did']
         presentationRequest = DIDSAMPLE._PRESENTATION_REQEUST
         return HTTPResponse(json.dumps(presentationRequest), status=status, headers={})
@@ -150,10 +165,12 @@ def presentationProposal():
         status = 400
         return HTTPResponse(status=status, headers={})
 
-@app.post('/PresentationProof')
+@app.post('/presentationProof')
 def PresentationProof():
     try:
         status = 400
+        if checkJWT() == False:
+            return HTTPResponse(status=410, headers={})
         data = json.loads(request.body.read())
         myUUID = DID.genUUID()
         did = data['did']
@@ -165,8 +182,8 @@ def PresentationProof():
         holder_pubkey = DID.getPubkeyFromDIDDocument(documentURL)
         name = vp['verifiableCredential'][0]['credentialSubject']['name']
         if holder_pubkey == None:
-            status = 404
-            LOGE("[Issuer] 2. DID AUTH - Document Get 에러 발생 %s" % documentURL)
+            status = 402
+            LOGE("[Verifier] 2. DID AUTH - Document Get 에러 발생 %s" % documentURL)
             rowData = {"name":name, "status":status, "result":result, "verify":verify}
             _REQUEST_LIST.append(rowData)
             socketio.emit('broadcasting',rowData, broadcast=True)
@@ -206,7 +223,22 @@ def PresentationProof():
     return HTTPResponse(json.dumps({"result": True}), status=status)
 
 
-
+@app.get('/ackMessage')
+def ack():
+    status = 400
+    try:
+        jwt = DID.getVerifiedJWT(request, _SECRET)
+        myUUID = jwt['uuid']
+        if DID.loadUUIDStatus(myUUID) == False:
+            status = 410
+            return HTTPResponse(status=status, headers={})
+        if DID.deleteUUIDStatus(myUUID) == True:
+            status = 200   
+        else :
+            status = 401
+        return HTTPResponse(json.dumps({"Response":True}), status=status, headers={})
+    except Exception as ex :
+        return HTTPResponse(status=status, headers={})
 
 
 @appFlask.route('/')

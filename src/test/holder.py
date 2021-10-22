@@ -137,7 +137,7 @@ vc_jejuPass = getVC(
 LOGI("[Holder] USER CONFIRMATION : OK")
 ackMessage(_ISSUER_URL, myJWT)
 
-myJWT = didAuth(_ISSUER_URL)
+myJWT = didAuth(_VERIFIER_URL)
 vpPresentation = presentationProposal(myJWT)
 
 LOGI("[Holder] READY FOR VP : %s" % vpPresentation)

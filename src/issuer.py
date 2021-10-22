@@ -84,6 +84,15 @@ def createCredentialDefinition(schemaID, tag, revocation):
         LOGE("[Issuer]0-1. Create Definition : ")
         return "credentialDefinition"
 
+
+def checkJWT():
+    try:
+        jwt = DID.getVerifiedJWT(request, _SECRET)
+        myUUID = jwt['uuid']
+        return DID.loadUUIDStatus(myUUID)
+    except:
+        return False
+        
 @app.get('/urls')
 def urls():
     try:
@@ -145,6 +154,8 @@ def res():
         status = 400
         return HTTPResponse(status=status)
     try:
+        if checkJWT() == False:
+            return HTTPResponse(status=410, headers={})
         jwt = DID.getVerifiedJWT(request, _SECRET)
         LOGI("[Issuer] 3. DID AUTH - jwt 결과(%s)" % str(jwt))
         challengeRet = DID.verifyString(jwt['challenge'] , signature, jwt['pubkey'])
@@ -167,11 +178,8 @@ def res():
 def credentialProposal():
     status = 404
     try:
-        jwt = DID.getVerifiedJWT(request, _SECRET)
-        myUUID = jwt['uuid']
-        if DID.loadUUIDStatus(myUUID) == False:
-            status = 404
-            return HTTPResponse(status=status, headers={})
+        if checkJWT() == False:
+            return HTTPResponse(status=410, headers={})
         schemaID = request.query['schemaID']
         credefID = request.query['creDefId']
         did = request.query['did']
@@ -191,11 +199,8 @@ def credentialProposal():
 def credentialRequest():
     status = 400
     try:
-        jwt = DID.getVerifiedJWT(request, _SECRET)
-        myUUID = jwt['uuid']
-        if DID.loadUUIDStatus(myUUID) == False:
-            status = 404
-            return HTTPResponse(status=status, headers={})
+        if checkJWT() == False:
+            return HTTPResponse(status=410, headers={})
         try:
             schemaID = request.query['schemaID']
             credefID = request.query['credefID']
@@ -221,9 +226,12 @@ def ack():
         jwt = DID.getVerifiedJWT(request, _SECRET)
         myUUID = jwt['uuid']
         if DID.loadUUIDStatus(myUUID) == False:
-            status = 404
+            status = 410
             return HTTPResponse(status=status, headers={})
-        status = 200
+        if DID.deleteUUIDStatus(myUUID) == True:
+            status = 200   
+        else :
+            status = 401
         return HTTPResponse(json.dumps({"Response":True}), status=status, headers={})
     except Exception as ex :
         return HTTPResponse(status=status, headers={})
@@ -233,7 +241,7 @@ def VCGet(vcType): ## getCredentialProposal
         jwt = DID.getVerifiedJWT(request, _SECRET)
         myUUID = jwt['uuid']
         if DID.loadUUIDStatus(myUUID) == False:
-            status = 404
+            status = 410
             return HTTPResponse(status=status, headers={})
         credentialSubject = DID.loadCredentialSubject(myUUID)
         vc = DIDSAMPLE.makeSampleVCwithoutJWS(_ISSUER_DID, vcType , credentialSubject)
