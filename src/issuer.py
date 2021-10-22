@@ -57,8 +57,8 @@ def initDID():
     createCredentialDefinition(schemaID1, "schemaID1", False)
     createCredentialDefinition(schemaID2, "schemaID2", False)
 
-    DID.saveCredentialDefinition("credentialDefinition1", DIDSAMPLE._CREDENTIALDEFINITION['credentialDefinition1'])
-    DID.saveCredentialDefinition("credentialDefinition2", DIDSAMPLE._CREDENTIALDEFINITION['credentialDefinition2'])
+    DID.saveCredentialDefinition("credentialDefinitionID1", DIDSAMPLE._CREDENTIALDEFINITION['credentialDefinitionID1'])
+    DID.saveCredentialDefinition("credentialDefinitionID2", DIDSAMPLE._CREDENTIALDEFINITION['credentialDefinitionID2'])
 
 def createSchema(schemaName, version, attribute):
     try:
@@ -99,16 +99,19 @@ def urls():
 @app.post('/didAuth')
 def DIDAuth(): ########### DID AUTH
     try:
-        vc = json.loads(request.body.read())
+        data = json.loads(request.body.read())
         myUUID = DID.genUUID()
         try:
-            did = vc['did']
+            did = data['did']
         except Exception:
-            LOGE("[Issuer] 2. VC POST - 에러 발생 %s" % vc)
+            LOGE("[Issuer] 1. didAuth - 에러 발생 %s" % data)
             status = 400
             return HTTPResponse(status=status)
         # DID.saveCredentialSubject(myUUID, credentialSubject)
-        challenge = DID.generateChallenge()
+        if did == DIDSAMPLE.ROLE["holder"]["did"]:
+            challenge = DIDSAMPLE.ROLE["issuer"]["challenge"] # FOR TEST
+        else:
+            challenge = DID.generateChallenge()
         documentURL = DIDSAMPLE.getDIDDocumentURL(did)
         pubkey = DID.getPubkeyFromDIDDocument(documentURL)
         if pubkey == None:
@@ -131,9 +134,9 @@ def DIDAuth(): ########### DID AUTH
         status = 403
         return HTTPResponse(status=status)
     DID.saveUUIDStatus(myUUID, True)
-    return HTTPResponse(json.dumps({"payload": challenge, "endPoint":_URL+"/response"}), status=203, headers={'Authorization':str_jwt})
+    return HTTPResponse(json.dumps({"payload": challenge, "endPoint":_URL+"/didAuth"}), status=203, headers={'Authorization':str_jwt})
 
-@app.get('/response')
+@app.get('/didAuth')
 def res():
     try:
         signature = request.query['signature']
@@ -165,6 +168,10 @@ def credentialProposal():
     status = 404
     try:
         jwt = DID.getVerifiedJWT(request, _SECRET)
+        myUUID = jwt['uuid']
+        if DID.loadUUIDStatus(myUUID) == False:
+            status = 404
+            return HTTPResponse(status=status, headers={})
         schemaID = request.query['schemaID']
         credefID = request.query['creDefId']
         did = request.query['did']
@@ -185,6 +192,10 @@ def credentialRequest():
     status = 400
     try:
         jwt = DID.getVerifiedJWT(request, _SECRET)
+        myUUID = jwt['uuid']
+        if DID.loadUUIDStatus(myUUID) == False:
+            status = 404
+            return HTTPResponse(status=status, headers={})
         try:
             schemaID = request.query['schemaID']
             credefID = request.query['credefID']
@@ -208,6 +219,10 @@ def ack():
     status = 400
     try:
         jwt = DID.getVerifiedJWT(request, _SECRET)
+        myUUID = jwt['uuid']
+        if DID.loadUUIDStatus(myUUID) == False:
+            status = 404
+            return HTTPResponse(status=status, headers={})
         status = 200
         return HTTPResponse(json.dumps({"Response":True}), status=status, headers={})
     except Exception as ex :

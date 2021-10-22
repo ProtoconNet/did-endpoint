@@ -20,8 +20,9 @@ ROLE = {
         "secret" : "ExsNKhvF3pqwDvFaVaiQnWWdyeVwxd",
         "host" : "127.0.0.1",
         "port" : 3333,
+        "challenge" : "_THISISHARDCODEDCHALLENGEFORTEST",
         "urls" : {
-            "getDIDAuth" : "/didAuth",
+            "didAuth" : "/didAuth",
             "getCredentialProposal" : "/credentialProposal",
             "getCredentialRequest" : "/credentialRequest",
             "getAckMessage" : "/ackMessage",
@@ -43,8 +44,7 @@ ROLE = {
         "secret" : "securekim",
         "webPort" : 8080,
         "urls" : {
-            "webUI" : "/",
-            "getDIDAuth" : "/didAuth",
+            "didAuth" : "/didAuth",
             "getPresentationProposal" : "/presentationProposal",
             "postPresentationProof" : "/PresentationProof",
             "getAckMessage" : "/ackMessage"
@@ -77,12 +77,12 @@ _SCHEMA = {
 }
 
 _CREDENTIALDEFINITION = {
-    "credentialDefinition1" : { # schemaID
+    "credentialDefinitionID1" : { # schemaID
         "schemaId" : "schemaID1", 
         "tag" : "driverLicense", 
         "revocation" : False
     },
-    "credentialDefinition2" : { # schemaID
+    "credentialDefinitionID2" : { # schemaID
         "schemaId" : "schemaID2", 
         "tag" : "jejuPass", 
         "revocation" : False
@@ -95,7 +95,7 @@ _PRESENTATION_REQEUST= {
             "name" : "driverLicense",
             "restrictions" : {
                 "schemaId" : "schemaID1",
-                "credDefId" : "credentialDefinition1"
+                "credDefId" : "credentialDefinitionID1"
             },
             "concealable" : True
         }, 
@@ -103,7 +103,7 @@ _PRESENTATION_REQEUST= {
             "name" : "jejuPass",
             "restrictions" : {
                 "schemaId" : "schemaID2",
-                "credDefId" : "credentialDefinition2"
+                "credDefId" : "credentialDefinitionID2"
             },
             "concealable" : True
         }
@@ -114,7 +114,7 @@ _PRESENTATION_REQEUST= {
         "value" : "VALUE FOR ZKP",
         "restrictions" : {
             "schemaId" : "schemaID2",
-            "credDefId" : "credentialDefinition2"
+            "credDefId" : "credentialDefinitionID2"
         }
     }],
     "selfAttestedAttribute": [{

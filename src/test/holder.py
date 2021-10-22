@@ -39,8 +39,8 @@ def createDIDDocument():
     LOGI("[Holder] Create DID Document : %s, VC Data : %s" % (data['id'], data))
 
 def didAuth(platform_url):
-    #1 DID AUTH 0 - sending DID
-    URL = platform_url + DIDSAMPLE.ROLE["issuer"]['urls']['getDIDAuth']
+    #1 DID AUTH 1 - sending DID
+    URL = platform_url + DIDSAMPLE.ROLE["issuer"]['urls']['didAuth']
     data = {'did': DIDSAMPLE.ROLE['holder']['did']} 
     response = requests.post(URL, data=json.dumps(data))
     if response.status_code >= 400 :
@@ -51,7 +51,7 @@ def didAuth(platform_url):
     data = json.loads(response.text)
     signature = DID.signString(data['payload'], DIDSAMPLE.ROLE['holder']['privateKey'])
 
-    #2 DID AUTH 1 - Sending signedPayload
+    #2 DID AUTH 2 - Sending signedPayload
     URL = data['endPoint'] + '?signature='+signature 
     response = requests.get(URL, headers={'Authorization':'Bearer ' + str(myJWT)}) 
     if response.status_code >= 400 :
@@ -123,7 +123,7 @@ vc_driverLicense = getVC(
     myJWT,
     DIDSAMPLE.ROLE['holder']['did'], 
     "schemaID1",
-    "credentialDefinition1"
+    "credentialDefinitionID1"
     )
 LOGI("[Holder] USER CONFIRMATION : OK")
 ackMessage(_ISSUER_URL, myJWT)
@@ -132,7 +132,7 @@ vc_jejuPass = getVC(
     myJWT,
     DIDSAMPLE.ROLE['holder']['did'], 
     "schemaID2",
-    "credentialDefinition2"
+    "credentialDefinitionID2"
     )
 LOGI("[Holder] USER CONFIRMATION : OK")
 ackMessage(_ISSUER_URL, myJWT)

@@ -109,9 +109,9 @@ def DIDAuth(): ########### DID AUTH
         status = 403
         return HTTPResponse(status=status)
     DID.saveUUIDStatus(myUUID, True)
-    return HTTPResponse(json.dumps({"payload": challenge, "endPoint":_URL+"/response"}), status=203, headers={'Authorization':str_jwt})
+    return HTTPResponse(json.dumps({"payload": challenge, "endPoint":_URL+"/didAuth"}), status=203, headers={'Authorization':str_jwt})
 
-@app.get('/response')
+@app.get('/didAuth')
 def res():
     try:
         signature = request.query['signature']
