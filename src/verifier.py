@@ -156,8 +156,8 @@ def res():
 def presentationProposal():
     status = 200
     try:
-        if checkJWT() == False:
-            return HTTPResponse(status=410, headers={})
+        # if checkJWT() == False:
+        #     return HTTPResponse(status=410, headers={})
         did = request.query['did']
         presentationRequest = DIDSAMPLE._PRESENTATION_REQEUST
         return HTTPResponse(json.dumps(presentationRequest), status=status, headers={})
