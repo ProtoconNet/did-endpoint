@@ -26,7 +26,7 @@ ROLE = {
             "getCredentialProposal" : "/credentialProposal",
             "getCredentialRequest" : "/credentialRequest",
             "getAckMessage" : "/ackMessage",
-            "postBuyJejuPass" : "/buyJejuPass"
+            "postBuyProtoconPass" : "/buyProtoconPass"
         }
     },
     "holder" : {
@@ -35,7 +35,7 @@ ROLE = {
         "publicKey" : "BY4xsAjAhfhFQpak5W99epnX5NQXd3WK9rWMYKrRYvw4",
         "credentialSubject" : { 
             'driverLicense' : {'name':'Audrey','birth': '2000/01/02','driverLicense': '13-10-662761-82'},
-            'jejuPass' : {'startDate':'2021-09-25T00:00:00.000', 'day':5, 'passType':'RestaurantOnly'}
+            'protoconPass' : {'startDate':'2021-09-25T00:00:00.000', 'day':5, 'passType':'RestaurantOnly'}
         }
     },
     "verifier" :{
@@ -58,7 +58,7 @@ ROLE = {
             "resolver" : "https://did-resolver.mitum.com/ddo/",
             "document" : "http://mitum.securekim.com:8080/v1/DIDDocument",
             "createSchema" : "http://mitum.securekim.com:8080/v1/schema",
-            "createDefinition" : "http://mitum.securekim.com:8080/v1/definition"
+            "createDefinition" : "http://mitum.securekim.com:8080/v1/credential_definition"
 
         }
     }
@@ -71,7 +71,7 @@ _SCHEMA = {
         "attribute" : ["name", "birth", "driverLicense"]
     },
     "schemaID2" : { # schemaID
-        "schemaName" : "jejuPass",
+        "schemaName" : "protoconPass",
         "version" : "0.1",
         "attribute" : ["startDate", "day", "passType"]
     }
@@ -85,7 +85,7 @@ _CREDENTIALDEFINITION = {
     },
     "credentialDefinitionID2" : { # schemaID
         "schemaId" : "schemaID2", 
-        "tag" : "jejuPass", 
+        "tag" : "protoconPass", 
         "revocation" : False
     }
 }
@@ -101,7 +101,7 @@ _PRESENTATION_REQEUST= {
             "concealable" : True
         }, 
         {
-            "name" : "jejuPass",
+            "name" : "protoconPass",
             "restrictions" : {
                 "schemaId" : "schemaID2",
                 "credDefId" : "credentialDefinitionID2"
@@ -125,12 +125,12 @@ _PRESENTATION_REQEUST= {
 
 _VCSCHEMA ={
     "driverLicense" : "vc1",
-    "jejuPass" : "vc2"
+    "protoconPass" : "vc2"
 }
 
 _VCTYPE ={
     "vc1" : "DriverCredential",
-    "vc2" : "JejuPassCredential"
+    "vc2" : "ProtoconPassCredential"
 }
 
 _VPSCHEMA ={

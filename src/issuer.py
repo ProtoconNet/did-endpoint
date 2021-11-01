@@ -63,25 +63,27 @@ def initDID():
 def createSchema(schemaName, version, attribute):
     try:
         URL = DIDSAMPLE.ROLE['platform']['urls']['createSchema']
-        data = {schemaName : schemaName, version : version, attribute : attribute}
+        data = {"schemaName" : schemaName, "version" : version, "attribute" : attribute}
         response = requests.post(URL, data=json.dumps(data))
-        DID.saveSchema(response.schemaID, data)
+        text = json.loads(response.text)
+        DID.saveSchema(text["id"], data)
         LOGI("[Issuer]0-0. Create Schema : %s " % (response))
-        return response.schemaID
-    except Exception:
-        LOGE("[Issuer]0-0. createSchema : ")
+        return text["id"]
+    except Exception as ex:
+        LOGE(ex)
         return "schemaID"
     
 def createCredentialDefinition(schemaID, tag, revocation):
     try : 
         URL = DIDSAMPLE.ROLE['platform']['urls']['createDefinition']
-        data = {schemaID : schemaID, tag : tag, revocation : revocation}
+        data = {"schemaID" : schemaID, "tag" : tag, "revocation" : revocation}
         response = requests.post(URL, data=json.dumps(data))
+        text = json.loads(response.text)
+        DID.saveCredentialDefinition(text["id"], data)
         LOGI("[Issuer]0-1. Create Definition : %s " % (response))
-        DID.saveCredentialDefinition(response.credDefID, data)
-        return response.credDefID
-    except Exception:
-        LOGE("[Issuer]0-1. Create Definition : ")
+        return text["id"]
+    except Exception as ex :
+        LOGE(ex)
         return "credentialDefinition"
 
 
@@ -260,14 +262,14 @@ def VCGet(vcType): ## getCredentialProposal
     LOGW("[Issuer] 4. VC Issuance - %s" % vc)
     return HTTPResponse(json.dumps({"Response":True, "VC": vc}), status=status, headers={})
 
-@app.post('/buyJejuPass')
+@app.post('/buyProtoconPass')
 def buyPost():
     try:
         buyInfo = json.loads(request.body.read())
         buyID = DID.genUUID()
         DIDSAMPLE.saveBuySample(buyID, buyInfo)
         status = 200
-        LOGW("[Issuer] 0. Buy JejuPass. buyID : %s, buyInfo : %s" % (buyID, buyInfo))
+        LOGW("[Issuer] 0. Buy ProtoconPass. buyID : %s, buyInfo : %s" % (buyID, buyInfo))
         return HTTPResponse(json.dumps({"Response":True, "buyID": buyID}), status=status, headers={})
     except Exception as ex:
         LOGE(ex)
@@ -300,11 +302,11 @@ def getVC1():
 def getVC2():
     return VCGet(DIDSAMPLE.getVCType('vc2'))
 
-@app.post('/jejuPass')
+@app.post('/protoconPass')
 def buyPassPost():
     return buyPost()
 
-@app.get('/jejuPass')
+@app.get('/protoconPass')
 def buyPassGet():
     return buyGet()
 

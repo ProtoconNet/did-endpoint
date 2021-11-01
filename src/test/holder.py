@@ -25,6 +25,8 @@ LOGD = LOG.debug
 LOGW = LOG.warning
 LOGE = LOG.error
 
+_sampleDID = "123"
+
 _ISSUER_URL = "http://"+ DIDSAMPLE.ROLE['issuer']['host'] + ":" + str(DIDSAMPLE.ROLE['issuer']['port'])
 _VERIFIER_URL = "http://"+ DIDSAMPLE.ROLE['verifier']['host'] + ":" + str(DIDSAMPLE.ROLE['verifier']['port'])
 app = bottle.Bottle()
@@ -91,12 +93,12 @@ def ackMessage(platform_url, myJWT):
         LOGE("ERROR : %s" % response.status_code)
 
 
-############## VP - JEJU PASS, DRIVER LICENSE ##############
+############## VP - protocon PASS, DRIVER LICENSE ##############
 
 def presentationProposal(myJWT):
     URL = _VERIFIER_URL + DIDSAMPLE.ROLE["verifier"]['urls']['getPresentationProposal']
     holderDID = { 'did' : DIDSAMPLE.ROLE['holder']['did'] }
-    response = requests.get(URL, params=holderDID, headers={'Authorization':'Bearer ' + str(myJWT)})
+    response = requests.get(URL, params=holderDID)
     if response.status_code >= 400 :
         LOGE("ERROR : %s" % response.status_code)
     #LOGI("[Holder] DID : %s, PresentationRequest : %s, JWT : %s" % (holderDID, response.text, myJWT))
@@ -128,7 +130,7 @@ vc_driverLicense = getVC(
 LOGI("[Holder] USER CONFIRMATION : OK")
 ackMessage(_ISSUER_URL, myJWT)
 myJWT = didAuth(_ISSUER_URL)
-vc_jejuPass = getVC(
+vc_protoconPass = getVC(
     myJWT,
     DIDSAMPLE.ROLE['holder']['did'], 
     "schemaID2",
@@ -142,5 +144,5 @@ vpPresentation = presentationProposal(myJWT)
 
 LOGI("[Holder] READY FOR VP : %s" % vpPresentation)
 
-vcArr = [vc_driverLicense, vc_jejuPass]
+vcArr = [vc_driverLicense, vc_protoconPass]
 presentationProof(myJWT, vcArr)
