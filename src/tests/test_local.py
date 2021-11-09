@@ -60,7 +60,7 @@ def test_makeAndVerifyVC_DRIVER_Success():
     DID.verifyVC(vc, DIDSAMPLE.ROLE['issuer']['publicKey'])
     return vc
 
-def test_makeAndVerifyVC_JEJUPASS_Success():
+def test_makeAndVerifyVC_PROTOCONPASS_Success():
     credentialSubject = test_SaveAndLoad_CredentialSubject_Success()
     vcType = DIDSAMPLE.getVCType('vc2')
     vc = DIDSAMPLE.makeSampleVCwithoutJWS(DIDSAMPLE.ROLE['issuer']['did'], vcType, credentialSubject)
@@ -93,8 +93,8 @@ def test_makeAndVerifyVC_OtherString_Fail():
 
 def test_makeAndVerifyVP_Success():
     driverVC = test_makeAndVerifyVC_DRIVER_Success()
-    jejuPassVC = test_makeAndVerifyVC_JEJUPASS_Success()
-    vp = DIDSAMPLE.makeSampleVPwithoutJWS(DIDSAMPLE.ROLE['holder']['did'], [driverVC, jejuPassVC])
+    protoconPassVC = test_makeAndVerifyVC_PROTOCONPASS_Success()
+    vp = DIDSAMPLE.makeSampleVPwithoutJWS(DIDSAMPLE.ROLE['holder']['did'], [driverVC, protoconPassVC])
     vpJWS = DID.makeJWS_jwtlib(vp, DIDSAMPLE.ROLE['holder']['privateKey'])
     vp['proof'][0]["jws"] = vpJWS
     DID.verifyVP(vp, DIDSAMPLE.ROLE['holder']['publicKey'])
@@ -109,8 +109,8 @@ def test_makeAndVerifyVP_Success():
 
 def test_makeAndVerifyVP_OtherKey_Fail():
     driverVC = test_makeAndVerifyVC_DRIVER_Success()
-    jejuPassVC = test_makeAndVerifyVC_JEJUPASS_Success()
-    vp = DIDSAMPLE.makeSampleVPwithoutJWS(DIDSAMPLE.ROLE['holder']['did'], [driverVC, jejuPassVC])
+    protoconPassVC = test_makeAndVerifyVC_PROTOCONPASS_Success()
+    vp = DIDSAMPLE.makeSampleVPwithoutJWS(DIDSAMPLE.ROLE['holder']['did'], [driverVC, protoconPassVC])
     vpJWS = DID.makeJWS_jwtlib(vp, DIDSAMPLE.ROLE['holder']['privateKey'])
     vp['proof'][0]["jws"] = vpJWS
     with pytest.raises(Exception, match=r".* PROBLEM"):
@@ -118,8 +118,8 @@ def test_makeAndVerifyVP_OtherKey_Fail():
 
 def test_makeAndVerifyVP_OtherVCKey_Fail():
     driverVC = test_makeAndVerifyVC_DRIVER_Success()
-    jejuPassVC = test_makeAndVerifyVC_JEJUPASS_Success()
-    vp = DIDSAMPLE.makeSampleVPwithoutJWS(DIDSAMPLE.ROLE['holder']['did'], [driverVC, jejuPassVC])
+    protoconPassVC = test_makeAndVerifyVC_PROTOCONPASS_Success()
+    vp = DIDSAMPLE.makeSampleVPwithoutJWS(DIDSAMPLE.ROLE['holder']['did'], [driverVC, protoconPassVC])
     vpJWS = DID.makeJWS_jwtlib(vp, DIDSAMPLE.ROLE['holder']['privateKey'])
     vp['proof'][0]["jws"] = vpJWS
     DID.verifyVP(vp, DIDSAMPLE.ROLE['holder']['publicKey'])
@@ -135,8 +135,8 @@ def test_makeAndVerifyVP_OtherVCKey_Fail():
 
 def test_makeAndVerifyVP_OtherData_Fail():
     driverVC = test_makeAndVerifyVC_DRIVER_Success()
-    jejuPassVC = test_makeAndVerifyVC_JEJUPASS_Success()
-    vp = DIDSAMPLE.makeSampleVPwithoutJWS(DIDSAMPLE.ROLE['holder']['did'], [driverVC, jejuPassVC])
+    protoconPassVC = test_makeAndVerifyVC_PROTOCONPASS_Success()
+    vp = DIDSAMPLE.makeSampleVPwithoutJWS(DIDSAMPLE.ROLE['holder']['did'], [driverVC, protoconPassVC])
     vpJWS = DID.makeJWS_jwtlib(vp, DIDSAMPLE.ROLE['holder']['privateKey'])
     vp['proof'][0]["jws"] = vpJWS
     vp['proof'][0]["test"] = "DUMMY"
