@@ -45,7 +45,7 @@ def test_createDIDDocument():
         assert False
         
 # 1.[GET] Req : locations
-def test_getURLs():
+def test_VC_getURLs_driverLicense():
     global signature, myJWT, data, VC_driverLicense, VC_protoconPass
     URL = _ISSUER_URL+'/urls' 
     response = requests.get(URL) 
@@ -57,7 +57,7 @@ def test_getURLs():
     assert True
 
 # 2.[POST] Req : DID Auth
-def test_DID_Auth():
+def test_VC_DID_Auth_driverLicense():
     global signature, myJWT, data, VC_driverLicense, VC_protoconPass
     URL = _ISSUER_URL + DIDSAMPLE.ROLE["issuer"]['urls']['didAuth'] 
     data = {'did': DIDSAMPLE.ROLE['holder']['did']}
@@ -72,7 +72,7 @@ def test_DID_Auth():
     assert True
 
 # 3.[GET] Req : Challenge & Response 
-def test_ChallengeResponse():
+def test_VC_ChallengeResponse_driverLicense():
     global signature, myJWT, data, VC_driverLicense, VC_protoconPass
     URL = data['endPoint'] + '?signature='+signature 
     response = requests.get(URL, headers={'Authorization':'Bearer ' + str(myJWT)}) 
@@ -83,7 +83,7 @@ def test_ChallengeResponse():
     assert True
 
 # 4.[GET] Req : VC
-def test_reqVC():
+def test_VC_getCredentialProposal_driverLicense():
     global signature, myJWT, data, VC_driverLicense, VC_protoconPass
     URL =  _ISSUER_URL + DIDSAMPLE.ROLE["issuer"]['urls']['getCredentialProposal']
     _data = {
@@ -91,15 +91,33 @@ def test_reqVC():
         'schemaID':"schemaID1",
         'creDefId':"credentialDefinitionID1"
     } 
-    response = requests.get(URL, params=(data), headers={'Authorization':'Bearer ' + str(myJWT)})
+    response = requests.get(URL, params=(_data), headers={'Authorization':'Bearer ' + str(myJWT)})
+    if response.status_code >= 400 :
+        LOGE("ERROR : %s" % response.status_code)
+        assert False
+    preview = json.loads(response.text)['credentialAttributeValueList']
+    LOGI("[Holder] VC 발급 Preview (Need Confirm): %s" % preview)
+    assert True
+
+# 5.[GET] Confirm : VC
+def test_VC_confirmAndgetCredentialRequest_driverLicense():
+    global signature, myJWT, data, VC_driverLicense, VC_protoconPass
+    URL =  _ISSUER_URL + DIDSAMPLE.ROLE["issuer"]['urls']['getCredentialRequest']
+    _data = {
+        'did': DIDSAMPLE.ROLE['holder']['did'], 
+        'schemaID':"schemaID1",
+        'creDefId':"credentialDefinitionID1"
+    } 
+    response = requests.get(URL, params=(_data), headers={'Authorization':'Bearer ' + str(myJWT)})
     if response.status_code >= 400 :
         LOGE("ERROR : %s" % response.status_code)
         assert False
     LOGI("[Holder] VC 발급 결과 : %s" % response.text)
     VC_driverLicense = json.loads(response.text)['VC']
+    print(response.text)
     assert True
 
-def test_ackMessage(platform_url):
+def test_VC_ackMessage_driverLicense():
     global signature, myJWT, data, VC_driverLicense, VC_protoconPass
     URL = _ISSUER_URL + DIDSAMPLE.ROLE["issuer"]['urls']['getAckMessage']
     response = requests.get(URL, headers={'Authorization':'Bearer ' + str(myJWT)}) 
@@ -109,7 +127,7 @@ def test_ackMessage(platform_url):
 ############## VC Issuance - PROTOCON PASS ##############
 # 
 # 0.[POST] req : Buy Protoconpass
-def test_buyProtoconpass():
+def test_VC_buyProtoconpass():
     global signature, myJWT, data, VC_driverLicense, VC_protoconPass
     URL = _ISSUER_URL + DIDSAMPLE.ROLE["issuer"]['urls']['postBuyProtoconPass']
     data = {'buyInfo': {"DID":"TEST", "CreditCard":"TEST"}}
@@ -122,7 +140,7 @@ def test_buyProtoconpass():
     assert True
 
 # 1.[GET] Req : Locations
-def test_getURLs2():
+def test_VC_getURLs_protoconPass():
     global signature, myJWT, data, VC_driverLicense, VC_protoconPass
     URL = _ISSUER_URL+'/urls' 
     response = requests.get(URL) 
@@ -134,7 +152,7 @@ def test_getURLs2():
     assert True
 
 # 2.[POST] Req : DID Auth
-def test_DID_Auth2():
+def test_VC_DID_Auth_protoconPass():
     global signature, myJWT, data, VC_driverLicense, VC_protoconPass
     URL = _ISSUER_URL + DIDSAMPLE.ROLE["issuer"]['urls']['didAuth'] 
     data = {'did': DIDSAMPLE.ROLE['holder']['did']}
@@ -149,7 +167,7 @@ def test_DID_Auth2():
     assert True
 
 # 3.[GET] Req : Challenge & Response 
-def test_ChallengeResponse2():
+def test_VC_ChallengeResponse_protoconPass():
     global signature, myJWT, data, VC_driverLicense, VC_protoconPass
     URL = data['endPoint'] + '?signature='+signature 
     response = requests.get(URL, headers={'Authorization':'Bearer ' + str(myJWT)}) 
@@ -160,7 +178,7 @@ def test_ChallengeResponse2():
     assert True
 
 # 4.[GET] Req : VC
-def test_reqVC2():
+def test_VC_getCredentialProposal_protoconPass():
     global signature, myJWT, data, VC_driverLicense, VC_protoconPass
     URL =  _ISSUER_URL + DIDSAMPLE.ROLE["issuer"]['urls']['getCredentialProposal']
     _data = {
@@ -168,7 +186,24 @@ def test_reqVC2():
         'schemaID':"schemaID2",
         'creDefId':"credentialDefinitionID2"
     } 
-    response = requests.get(URL, params=(data), headers={'Authorization':'Bearer ' + str(myJWT)})
+    response = requests.get(URL, params=(_data), headers={'Authorization':'Bearer ' + str(myJWT)})
+    if response.status_code >= 400 :
+        LOGE("ERROR : %s" % response.status_code)
+        assert False
+    preview = json.loads(response.text)['credentialAttributeValueList']
+    LOGI("[Holder] VC 발급 Preview (Need Confirm): %s" % preview)
+    assert True
+
+# 5.[GET] Confirm : VC
+def test_VC_confirmAndgetCredentialRequest_protoconPass():
+    global signature, myJWT, data, VC_driverLicense, VC_protoconPass
+    URL =  _ISSUER_URL + DIDSAMPLE.ROLE["issuer"]['urls']['getCredentialRequest']
+    _data = {
+        'did': DIDSAMPLE.ROLE['holder']['did'], 
+        'schemaID':"schemaID2",
+        'creDefId':"credentialDefinitionID2"
+    } 
+    response = requests.get(URL, params=(_data), headers={'Authorization':'Bearer ' + str(myJWT)})
     if response.status_code >= 400 :
         LOGE("ERROR : %s" % response.status_code)
         assert False
@@ -176,8 +211,9 @@ def test_reqVC2():
     VC_protoconPass = json.loads(response.text)['VC']
     assert True
 
-def test_ackMessage2(platform_url, myJWT):
-    URL = platform_url + DIDSAMPLE.ROLE["issuer"]['urls']['getAckMessage']
+def test_VC_ackMessage_protoconPass():
+    global signature, myJWT, data, VC_driverLicense, VC_protoconPass
+    URL = _ISSUER_URL + DIDSAMPLE.ROLE["issuer"]['urls']['getAckMessage']
     response = requests.get(URL, headers={'Authorization':'Bearer ' + str(myJWT)}) 
     if response.status_code >= 400 :
         LOGE("ERROR : %s" % response.status_code)
@@ -185,7 +221,7 @@ def test_ackMessage2(platform_url, myJWT):
 ############## VP - PROTOCON PASS, DRIVER LICENSE ##############
 # 
 # 1.[GET] Req : locations
-def test_getURLs():
+def test_VP_getURLs():
     global signature, myJWT, data, VC_driverLicense, VC_protoconPass
     URL = _VERIFIER_URL+'/urls' 
     response = requests.get(URL) 
@@ -197,7 +233,7 @@ def test_getURLs():
     assert True
 
 # 2.[POST] Req : DID Auth
-def test_DID_Auth():
+def test_VP_DID_Auth():
     global signature, myJWT, data, VC_driverLicense, VC_protoconPass
     URL = _VERIFIER_URL + DIDSAMPLE.ROLE["verifier"]['urls']['didAuth'] 
     data = {'did': DIDSAMPLE.ROLE['holder']['did']}
@@ -212,7 +248,7 @@ def test_DID_Auth():
     assert True
 
 # 3.[GET] Req : Challenge & Response 
-def test_ChallengeResponse():
+def test_VP_ChallengeResponse():
     global signature, myJWT, data, VC_driverLicense, VC_protoconPass
     URL = data['endPoint'] + '?signature='+signature 
     response = requests.get(URL, headers={'Authorization':'Bearer ' + str(myJWT)}) 
@@ -223,49 +259,30 @@ def test_ChallengeResponse():
     assert True
 
 
-
-
+def test_VP_presentationProposal():
+    global signature, myJWT, data, VC_driverLicense, VC_protoconPass
+    URL = _VERIFIER_URL + DIDSAMPLE.ROLE["verifier"]['urls']['getPresentationProposal']
+    holderDID = { 'did' : DIDSAMPLE.ROLE['holder']['did'] }
+    response = requests.get(URL, params=holderDID)
+    if response.status_code >= 400 :
+        LOGE("ERROR : %s" % response.status_code)
+        assert False
+    LOGI("[Holder] DID : %s, Presentations : %s, JWT : %s" % (holderDID, response.text, myJWT))
+    assert True
 
 # 2.[POST] Req : DID & VP
-def test_DID_VP():
+def test_VP_postPresentationProof():
     global signature, myJWT, data, VC_driverLicense, VC_protoconPass
     vcArr = [VC_driverLicense, VC_protoconPass]
     holderDID = DIDSAMPLE.ROLE['holder']['did']
     vp = DIDSAMPLE.makeSampleVPwithoutJWS(holderDID, vcArr)
     vpJWS = DID.makeJWS_jwtlib(vp, DIDSAMPLE.ROLE['holder']['privateKey'])
     vp['proof'][0]["jws"] = vpJWS
-    URL = _VERIFIER_URL
+    URL = _VERIFIER_URL + DIDSAMPLE.ROLE["verifier"]['urls']['postPresentationProof']
     data = {'did': DIDSAMPLE.ROLE['holder']['did'], 'vp':vp} 
-    response = requests.post(URL, data=json.dumps(data))
+    response = requests.post(URL, data=json.dumps(data), headers={'Authorization':'Bearer ' + str(myJWT)})
     if response.status_code >= 400 :
         LOGE("ERROR : %s" % response.status_code)
         assert False
-    myJWT = response.headers.get('Authorization')
-    LOGI("[Holder] DID : %s, VP Data : %s, JWT : %s" % (data['did'], data, myJWT))
-
-    data = json.loads(response.text)
-    signature = DID.signString(data['payload'], DIDSAMPLE.ROLE['holder']['privateKey'])
+    LOGI("[Holder] RESULT OF VP VERIFICATION: %s" % response.text)
     assert True
-
-# 3.[GET] Req : Challenge & Response 
-def test_challenge_response_VP():
-    global signature, myJWT, data, VC_driverLicense, VC_protoconPass
-    URL = data['endPoint'] + '?signature='+signature 
-    response = requests.get(URL, headers={'Authorization':'Bearer ' + str(myJWT)}) 
-    if response.status_code >= 400 :
-        LOGE("ERROR : %s" % response.status_code)
-        assert False
-    LOGI("[Holder] DID Auth 결과 : %s" % response.text)
-    assert True
-
-# 4.[GET] Req : VP
-def test_VPGet():
-    global signature, myJWT, data, VC_driverLicense, VC_protoconPass
-    URL = VPGet
-    response = requests.get(URL, headers={'Authorization':'Bearer ' + str(myJWT)}) 
-    if response.status_code >= 400 :
-        LOGE("ERROR : %s" % response.status_code)
-        assert False
-    LOGI("[Holder] VP 결과 : %s" % response.text)
-    assert True
-    
