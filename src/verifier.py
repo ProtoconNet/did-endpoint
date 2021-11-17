@@ -105,7 +105,7 @@ def DIDAuth(): ########### DID AUTH
             status = 404
             return HTTPResponse(status=status)
         encoded_jwt = jwt.encode({"uuid": myUUID, "pubkey":pubkey, "challenge":challenge}, _SECRET, algorithm="HS256")
-        LOGW("[Verifier] 2. DID AUTH - VC Post : 생성한 챌린지(%s), DID Document의 공개키(%s), Holder에게 JWT 발급(%s)." 
+        LOGW("[Verifier] 2. DID AUTH : 생성한 챌린지(%s), DID Document의 공개키(%s), Holder에게 JWT 발급(%s)." 
         % (challenge, pubkey, encoded_jwt))
         try:
             str_jwt = str(encoded_jwt.decode("utf-8"))
@@ -116,7 +116,7 @@ def DIDAuth(): ########### DID AUTH
             status = 202
     except Exception as ex :
         LOGE(ex)
-        LOGW("[Verifier] 2. DID AUTH - VC Post에서 Exception 발생")
+        LOGW("[Verifier] 2. DID AUTH 에서 Exception 발생")
         status = 403
         return HTTPResponse(status=status)
     DID.saveUUIDStatus(myUUID, True)
@@ -160,9 +160,11 @@ def presentationProposal():
         #     return HTTPResponse(status=410, headers={})
         did = request.query['did']
         presentationRequest = DIDSAMPLE._PRESENTATION_REQEUST
+        LOGW("[Verifier] 4. Presentation Proposal : (%s)", presentationRequest)
         return HTTPResponse(json.dumps(presentationRequest), status=status, headers={})
     except Exception as ex :
         status = 400
+        LOGE(ex)
         return HTTPResponse(status=status, headers={})
 
 @app.post('/presentationProof')
@@ -197,6 +199,7 @@ def PresentationProof():
                 vcurl = DIDSAMPLE.getDIDDocumentURL(vcdid)
                 vcpubkey = DID.getPubkeyFromDIDDocument(vcurl)
                 DID.verifyVC(vc, vcpubkey)
+                LOGW("[Verifier] Verify VP : TRUE")
                 verify.append(1)
             except Exception as ex :
                 status = 401
@@ -217,6 +220,7 @@ def PresentationProof():
     DID.saveUUIDStatus(myUUID, True)
     status = 200
     result = 1
+    LOGW("VP Verified : %s", True)
     rowData = {"name":name, "status":status, "result":result, "verify":verify, "context":"고객 정보 검증이 완료되었습니다."}
     _REQUEST_LIST.append(rowData)
     socketio.emit('broadcasting',rowData, broadcast=True)

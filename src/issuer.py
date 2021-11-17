@@ -67,7 +67,7 @@ def createSchema(schemaName, version, attribute):
         response = requests.post(URL, data=json.dumps(data))
         text = json.loads(response.text)
         DID.saveSchema(text["id"], data)
-        LOGI("[Issuer]0-0. Create Schema : %s " % (response))
+        LOGW("[Issuer]0-0. Create Schema : %s " % (response.text))
         return text["id"]
     except Exception as ex:
         LOGE(ex)
@@ -80,7 +80,7 @@ def createCredentialDefinition(schemaID, tag, revocation):
         response = requests.post(URL, data=json.dumps(data))
         text = json.loads(response.text)
         DID.saveCredentialDefinition(text["id"], data)
-        LOGI("[Issuer]0-1. Create Definition : %s " % (response))
+        LOGW("[Issuer]0-1. Create Definition : %s " % (response.text))
         return text["id"]
     except Exception as ex :
         LOGE(ex)
@@ -126,11 +126,11 @@ def DIDAuth(): ########### DID AUTH
         documentURL = DIDSAMPLE.getDIDDocumentURL(did)
         pubkey = DID.getPubkeyFromDIDDocument(documentURL)
         if pubkey == None:
-            LOGE("[Issuer] 2. DID AUTH - Document Get 에러 발생 %s" % documentURL)
+            LOGE("[Issuer] 1. DID AUTH - Document Get 에러 발생 %s" % documentURL)
             status = 404
             return HTTPResponse(status=status)
         encoded_jwt = jwt.encode({"uuid": myUUID, "pubkey":pubkey, "challenge":challenge}, _SECRET, algorithm="HS256")
-        LOGW("[Issuer] 2. DID AUTH - VC Post : 생성한 챌린지(%s), DID Document의 공개키(%s), Holder에게 JWT 발급(%s)." 
+        LOGW("[Issuer] 1. DID AUTH - VC Post : 생성한 챌린지(%s), DID Document의 공개키(%s), Holder에게 JWT 발급(%s)." 
         % (challenge, pubkey, encoded_jwt))
         try:
             str_jwt = str(encoded_jwt.decode("utf-8"))
@@ -141,17 +141,17 @@ def DIDAuth(): ########### DID AUTH
             status = 202
     except Exception as ex :
         LOGE(ex)
-        LOGW("[Issuer] 2. DID AUTH - VC Post에서 Exception 발생")
+        LOGW("[Issuer] 1. DID AUTH - VC Post에서 Exception 발생")
         status = 403
         return HTTPResponse(status=status)
     DID.saveUUIDStatus(myUUID, True)
     return HTTPResponse(json.dumps({"payload": challenge, "endPoint":_URL+"/didAuth"}), status=203, headers={'Authorization':str_jwt})
 
 @app.get('/didAuth')
-def res():
+def didAuthRes():
     try:
         signature = request.query['signature']
-        LOGI("[Issuer] 3. DID AUTH - Signature(%s)" % str(signature))
+        LOGI("[Issuer] 2. DID AUTH - Signature(%s)" % str(signature))
     except Exception:
         status = 400
         return HTTPResponse(status=status)
@@ -159,22 +159,22 @@ def res():
         if checkJWT() == False:
             return HTTPResponse(status=410, headers={})
         jwt = DID.getVerifiedJWT(request, _SECRET)
-        LOGI("[Issuer] 3. DID AUTH - jwt 결과(%s)" % str(jwt))
+        LOGI("[Issuer] 2. DID AUTH - jwt 결과(%s)" % str(jwt))
         challengeRet = DID.verifyString(jwt['challenge'] , signature, jwt['pubkey'])
         if challengeRet == True:
-            LOGW("[Issuer] 3. DID AUTH - Verified : 사인 값(%s) 검증 성공." % signature)
+            LOGW("[Issuer] 2. DID AUTH - Verified : 사인 값(%s) 검증 성공." % signature)
             status = 200
         else:
             DID.saveUUIDStatus(jwt['uuid'], False)
-            LOGW("[Issuer] 3. DID AUTH - Verify : Challenge(%s)의 사인 값(%s)을 pubkey(%s)로 검증 실패." % (jwt['challenge'] , signature, jwt['pubkey']))
+            LOGW("[Issuer] 2. DID AUTH - Verify : Challenge(%s)의 사인 값(%s)을 pubkey(%s)로 검증 실패." % (jwt['challenge'] , signature, jwt['pubkey']))
             status = 401
+        return HTTPResponse(json.dumps({"Response": challengeRet}), status=status, headers={})
     except Exception as ex :
         challengeRet = False
         DID.saveUUIDStatus(jwt['uuid'], False)
         LOGE(ex)
-        LOGW("[Issuer] 3. DID AUTH - Verify : ERROR : 사인 검증 실패 : %s" % signature)
+        LOGW("[Issuer] 2. DID AUTH - Verify : ERROR : %s" % signature)
         status = 403
-    return HTTPResponse(json.dumps({"Response": challengeRet}), status=status, headers={})
 
 @app.get('/credentialProposal')
 def credentialProposal():
@@ -191,9 +191,11 @@ def credentialProposal():
         attributes  = DIDSAMPLE.ROLE['holder']['credentialSubject'][vcType]
         #vcSample = DIDSAMPLE.makeSampleVCwithoutJWS(_ISSUER_DID, vcType, attributes)
         status = 200
+        LOGW("[Issuer] 3. VC LOG : did : (%s), schemaID:(%s), credefID(%s), attributes (%s) ",did, schemaID, credefID, attributes)
         return HTTPResponse(json.dumps({"Response":True, "credentialAttributeValueList": attributes}), status=status, headers={})
     except Exception as ex :
         status = 400
+        LOGE(ex)
         return HTTPResponse(status=status, headers={})
     
 
@@ -217,8 +219,10 @@ def credentialRequest():
         jws = DID.makeJWS_jwtlib(vc, _ISSUER_PRIVATEKEY)
         vc['proof']["jws"] = jws
         status = 200
+        LOGW("[Issuer] 4. Verifiable Credential (%s) ", vc)
         return HTTPResponse(json.dumps({"Response":True, "VC": vc}), status=status, headers={})
     except Exception as ex :
+        LOGE(ex)
         return HTTPResponse(status=status, headers={})
 
 @app.get('/ackMessage')
@@ -234,8 +238,10 @@ def ack():
             status = 200   
         else :
             status = 401
+        LOGW("5. ack Response : (%s)", True)
         return HTTPResponse(json.dumps({"Response":True}), status=status, headers={})
     except Exception as ex :
+        LOGW(ex)
         return HTTPResponse(status=status, headers={})
 
 def VCGet(vcType): ## getCredentialProposal

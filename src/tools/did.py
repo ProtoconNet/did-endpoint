@@ -174,7 +174,11 @@ def verifyVC(vc, publicKeyB58):
     dumpedVPB64 = base64.urlsafe_b64encode(dumpedVP)
     dumpedVPB64decoded = dumpedVPB64.decode("utf-8").rstrip("=")
     vc['proof']['jws'] = jws
-    return verifyJWS(jws, dumpedVPB64decoded, publicKeyB58)
+    if isExpired(vc['expirationDate']):
+        raise Exception("FAIL - verifyVC - VC has already expired.")
+    else :
+        print("[DID] VC is not expired")
+        return verifyJWS(jws, dumpedVPB64decoded, publicKeyB58)
 
 def verifyVP(vp, publicKeyB58):
     #1. VERIFY HOLDER
@@ -182,10 +186,13 @@ def verifyVP(vp, publicKeyB58):
     dumpedVP = json.dumps(vp, separators=(',', ':')).encode('utf8')
     dumpedVPB64 = base64.urlsafe_b64encode(dumpedVP)
     dumpedVPB64decoded = dumpedVPB64.decode("utf-8").rstrip("=")
+    vpExpire = vp['proof'][0]['expire']
     vp['proof'][0]['jws'] = jws
-    return verifyJWS(jws, dumpedVPB64decoded, publicKeyB58)
-    #2. TODO : VERIFY EXPIRE
-    
+    if isExpired(vpExpire):
+        raise Exception("FAIL - verifyVP - VP has already expired.")
+    else :
+        print("[DID] VP is not expired")
+        return verifyJWS(jws, dumpedVPB64decoded, publicKeyB58)
 
 def verifyJWS(jws, bodyB64, publicKeyB58):
     try:

@@ -14,6 +14,16 @@ def test_futureExpire():
     result = DID.isExpired(future)
     assert (result) == False
 
+def test_generateChallenge():
+    try:
+        challenge = DID.generateChallenge()
+        if(isinstance(challenge, str)):
+            assert True
+        else:
+            assert False
+    except Exception:
+        assert False
+
 def test_DIDAuth_Success():
     challenge = DID.generateChallenge()
     signedChallenge = DID.signString(challenge, DIDSAMPLE.ROLE['holder']['privateKey'])

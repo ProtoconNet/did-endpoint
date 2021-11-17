@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime
 import bottle
 import canister
 import json
@@ -42,8 +43,52 @@ def test_createDIDDocument():
     LOGI("[Holder] Create DID Document : %s, VC Data : %s" % (data['id'], data))
     if response.status_code >= 500 :
         LOGE("ERROR : %s" % response.status_code)
+        assert False        
+
+# 0-1. [POST] Req : Get DID Document
+def test_getDIDDocument():
+    global signature, myJWT, data, VC_driverLicense, VC_protoconPass
+    documentURL = DIDSAMPLE.getDIDDocumentURL(DIDSAMPLE.ROLE['holder']['did'])
+    pubkey = DID.getPubkeyFromDIDDocument(documentURL)
+    if pubkey == None:
         assert False
-        
+    assert True
+
+# 0-2. [POST] Req : Create Schema
+def test_createSchema():
+    global signature, myJWT, data, VC_driverLicense, VC_protoconPass, schemaID
+    try:
+        schemaName = DIDSAMPLE._SCHEMA['schemaID1']['schemaName']
+        version = DIDSAMPLE._SCHEMA['schemaID1']['version']
+        attribute = DIDSAMPLE._SCHEMA['schemaID1']['attribute']
+        URL = DIDSAMPLE.ROLE['platform']['urls']['createSchema']
+        dt = {"schemaName" : schemaName, "version" : version, "attribute" : attribute}
+        response = requests.post(URL, data=json.dumps(dt))
+        text = json.loads(response.text)
+        schemaID = text["id"]
+        if response.status_code >= 400 :
+            LOGE("ERROR : %s" % response.status_code)
+            assert False        
+        assert True    
+    except Exception as ex:
+        assert False
+
+# 0-3. [POST] Req : Create Definition
+def test_createDefinition():
+    global signature, myJWT, data, VC_driverLicense, VC_protoconPass, schemaID
+    try:
+        tag = "schemaID1", 
+        revocation = False
+        URL = DIDSAMPLE.ROLE['platform']['urls']['createDefinition']
+        dt = {"schemaID" : schemaID, "tag" : tag, "revocation" : revocation}
+        response = requests.post(URL, data=json.dumps(dt))
+        if response.status_code >= 400 :
+            LOGE("ERROR : %s" % response.status_code)
+            assert False        
+        assert True    
+    except Exception as ex:
+        assert False
+
 # 1.[GET] Req : locations
 def test_VC_getURLs_driverLicense():
     global signature, myJWT, data, VC_driverLicense, VC_protoconPass
@@ -54,7 +99,7 @@ def test_VC_getURLs_driverLicense():
         assert False
     LOGI("[Holder] 위치 : %s : %s" % (response.status_code, response.text))
     data = json.loads(response.text)
-    assert True
+    assert True 
 
 # 2.[POST] Req : DID Auth
 def test_VC_DID_Auth_driverLicense():
