@@ -1,6 +1,5 @@
 
 <p align="center">
-<!--   <img src="https://user-images.githubusercontent.com/35220663/126043566-b10938fb-bbf3-4f3a-8e7c-1241841b86fd.png" width="300"> -->
   <h1 align="center">DID-EndPoint</h1>
   <p align="center">
     <a href="">
@@ -12,7 +11,7 @@
   </p>
 </p>
 
-Tooling that automates your Decentralized-Identifier interactions to process DID Auth and VC issuance with holder on Issuer implemented in Python.
+Tooling that automates your Decentralized-Identifier interactions to process DID Auth and VC issuance with holder on Issuer & Verifier implemented in Python.
 
 ## Identities
 
@@ -26,7 +25,7 @@ An identity has:
 
 - A public key stored on the mitum
 
-![requestFlow](https://user-images.githubusercontent.com/35220663/126044686-9662f46a-dc37-4623-b123-ca3bd771eaae.png)
+![Mitum Simulation](https://user-images.githubusercontent.com/35220663/141648188-c95a7a4c-c7d7-4697-8bf1-517095cedeb4.gif)
 
 ## Installation
 
@@ -55,16 +54,22 @@ LOG = {
 ## Run
 
 ```sh
-cd src
 
-python issuer.py &
+./start.sh
+
 ```
 
 ## TEST
 
-```sh
-cd test
+Pre : Run Issuer & Verifier.
 
-python holder.py
+For Unit Testing with Local & Network : 
+```sh
+pytest 
+
 ```
 
+For Client Testing with Issuer & Verifier : 
+```sh
+python3 holder.py
+```

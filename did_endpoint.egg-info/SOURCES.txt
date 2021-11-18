@@ -1,0 +1,8 @@
+README.md
+setup.cfg
+setup.py
+did_endpoint.egg-info/PKG-INFO
+did_endpoint.egg-info/SOURCES.txt
+did_endpoint.egg-info/dependency_links.txt
+did_endpoint.egg-info/requires.txt
+did_endpoint.egg-info/top_level.txt
