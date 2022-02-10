@@ -13,7 +13,7 @@ def addTime(addDay):
 
 ROLE = {
     "issuer" :{
-        "did" :"did:mtm:test_issuer",
+        "did" :"did:mtm:testIssuer",
         "privateKey" : "4YUNdokj58dyuRQpuoFY2WwCNG47Ermka5XoSFfjhdqZ",
         "privateKey_SSH" : "TODO",
         "publicKey" : "3rfrZgGZHXpjiGr1m3SKAbZSktYudfJCBsoJm4m1XUgp",
@@ -30,7 +30,7 @@ ROLE = {
         }
     },
     "holder" : {
-        "did" : "did:mtm:test_holder",
+        "did" : "did:mtm:testHolder",
         "privateKey" : "4CtnviPnQX6CyHajqyEik8RZpxTx1mJHRhgNJ2uCTVA4",
         "publicKey" : "BY4xsAjAhfhFQpak5W99epnX5NQXd3WK9rWMYKrRYvw4",
         "credentialSubject" : { 
