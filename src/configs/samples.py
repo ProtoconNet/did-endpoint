@@ -52,13 +52,13 @@ ROLE = {
         }
     },
     "platform" :{
-        'url' : 'http://mitum.securekim.com:8080',
+        'url' : 'http://mitum.securekim.com:8888',
         "urls" :{
-            "schema" : "http://mitum.securekim.com:8080/v1/schema",
+            "schema" : "http://mitum.securekim.com:8888/v1/schema",
             "resolver" : "https://did-resolver.mitum.com/ddo/",
-            "document" : "http://mitum.securekim.com:8080/v1/DIDDocument",
-            "createSchema" : "http://mitum.securekim.com:8080/v1/schema",
-            "createDefinition" : "http://mitum.securekim.com:8080/v1/credential_definition"
+            "document" : "http://mitum.securekim.com:8888/v1/DIDDocument",
+            "createSchema" : "http://mitum.securekim.com:8888/v1/schema",
+            "createDefinition" : "http://mitum.securekim.com:8888/v1/credential_definition"
 
         }
     }
