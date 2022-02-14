@@ -82,7 +82,7 @@ Auto update and refresh for issuer & verifier servers with crontab
 ```sh
 $ crontab -e
 	...
-	0 3 * * * {Your directory}/did-endpoint/start.sh
+	0 3 * * * {Your directory}/did-endpoint/update.sh
 ```
 
 ## TEST
