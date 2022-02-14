@@ -51,12 +51,38 @@ LOG = {
 }
 ```
 
+## Prework
+
+You should change host to your domain.
+
+src/config/samples.py
+```py
+"issuer" :{
+	...
+	"host":"mitum.securekim.com", # change it
+	...
+"verifier" :{
+	...
+	"host":"mitum.securekim.com", # change it
+```
+
 ## Run
 
 ```sh
 
-./start.sh
+$ python3 src/issuer.py&
+$ python3 src/verifier.py&
 
+```
+
+## Postwork
+Auto update and refresh for issuer & verifier servers with crontab 
+(everyday at 3AM)
+
+```sh
+$ crontab -e
+	...
+	0 3 * * * {Your directory}/did-endpoint/start.sh
 ```
 
 ## TEST
@@ -65,11 +91,11 @@ Pre : Run Issuer & Verifier.
 
 For Unit Testing with Local & Network : 
 ```sh
-pytest 
+$ pytest 
 
 ```
 
 For Client Testing with Issuer & Verifier : 
 ```sh
-python3 holder.py
+$ python3 holder.py
 ```
