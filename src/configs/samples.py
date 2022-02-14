@@ -13,12 +13,12 @@ def addTime(addDay):
 
 ROLE = {
     "issuer" :{
-        "did" :"did:mtm:test_issuer",
+        "did" :"did:mtm:testIssuer",
         "privateKey" : "4YUNdokj58dyuRQpuoFY2WwCNG47Ermka5XoSFfjhdqZ",
         "privateKey_SSH" : "TODO",
         "publicKey" : "3rfrZgGZHXpjiGr1m3SKAbZSktYudfJCBsoJm4m1XUgp",
         "secret" : "ExsNKhvF3pqwDvFaVaiQnWWdyeVwxd",
-        "host" : "127.0.0.1",
+        "host" : "mtm.securekim.com", #change it
         "port" : 3333,
         "challenge" : "_THISISHARDCODEDCHALLENGEFORTEST",
         "urls" : {
@@ -30,7 +30,7 @@ ROLE = {
         }
     },
     "holder" : {
-        "did" : "did:mtm:test_holder",
+        "did" : "did:mtm:testHolder",
         "privateKey" : "4CtnviPnQX6CyHajqyEik8RZpxTx1mJHRhgNJ2uCTVA4",
         "publicKey" : "BY4xsAjAhfhFQpak5W99epnX5NQXd3WK9rWMYKrRYvw4",
         "credentialSubject" : { 
@@ -39,7 +39,7 @@ ROLE = {
         }
     },
     "verifier" :{
-        "host" : "127.0.0.1",
+        "host" : "mtm.securekim.com", #change it
         "port" : 3082,
         "secret" : "securekim",
         "webPort" : 8080,
@@ -52,13 +52,13 @@ ROLE = {
         }
     },
     "platform" :{
-        'url' : 'http://mitum.securekim.com:8080',
+        'url' : 'http://mitum.securekim.com:8888',
         "urls" :{
-            "schema" : "http://mitum.securekim.com:8080/v1/schema",
+            "schema" : "http://mitum.securekim.com:8888/v1/schema",
             "resolver" : "https://did-resolver.mitum.com/ddo/",
-            "document" : "http://mitum.securekim.com:8080/v1/DIDDocument",
-            "createSchema" : "http://mitum.securekim.com:8080/v1/schema",
-            "createDefinition" : "http://mitum.securekim.com:8080/v1/credential_definition"
+            "document" : "http://mitum.securekim.com:8888/v1/DIDDocument",
+            "createSchema" : "http://mitum.securekim.com:8888/v1/schema",
+            "createDefinition" : "http://mitum.securekim.com:8888/v1/credential_definition"
 
         }
     }
