@@ -30,15 +30,15 @@ An identity has:
 ## Installation
 
 ```sh
-python setup.py install
+$ python3 setup.py install
 ```
 
 If setup.py doesn't work properly, please just install necessary packages with requirements.txt before running setup.py.
 
 ```sh
-pip install --upgrade pip
+pip3 install --upgrade pip
 
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 <b>[optional]</b> If you have a sentry account, Create a new file (privates.py) in the src/configs if it does not exist.
