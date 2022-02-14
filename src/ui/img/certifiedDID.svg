@@ -1,0 +1,10 @@
+<svg width="95" height="22" xmlns="http://www.w3.org/2000/svg">
+    <g fill="none" fill-rule="evenodd">
+        <rect stroke="#581CC8" fill="#FFF" x=".5" y=".5" width="94" height="21" rx="10.5"/>
+        <text font-family="NotoSansKR-Regular, Noto Sans KR" font-size="12" fill="#581CC8">
+                            <tspan x="29" y="15">DID 인증 </tspan>
+                        </text>
+        <circle fill="#581CC8" cx="12" cy="11" r="7"/>
+        <path stroke="#FFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="m7.996 10.077 3.307 4.674 3.693-7"/>
+    </g>
+</svg>

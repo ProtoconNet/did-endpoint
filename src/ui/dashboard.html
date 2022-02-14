@@ -1,0 +1,122 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="css/index.css">
+        <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js" integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
+        <script src="http://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
+        <script src="js/socketio.js"></script>
+        <script src="js/index.js"></script>
+    </head>
+    <body >
+        <div class="BG">
+            <!-- <div class="Sidebar-line"></div> -->
+            <div class="header">
+                <img src="img/menu.png"
+                srcset="img/menu@2x.png 2x,
+                        img/menu@3x.png 3x"
+                class="Menu">
+                <img src="img/logo.png"
+                srcset="img/logo@2x.png 2x,
+                        img/logo@3x.png 3x"
+                class="logo">
+                <img src="img/search-window.png"
+                srcset="img/search-window@2x.png 2x,
+                        img/search-window@3x.png 3x"
+                class="Search-Window" >
+                <img src="img/account.png"
+                srcset="img/account@2x.png 2x,
+                        img/account@3x.png 3x"
+                class="Account">
+                <img  src="img/settings.png"
+                srcset="img/settings@2x.png 2x,
+                        img/settings@3x.png 3x"
+                class="Settings">
+                <img  src="img/noti.png"
+                srcset="img/noti@2x.png 2x,
+                        img/noti@3x.png 3x"
+                class="noti">
+            </div>
+            <div class="leftSection_dashboard">
+                <div class = "SelectedItem_dashboard">
+                    <img src="img/icon-dashboard-selected.png"
+                    srcset="img/icon-dashboard-selected@2x.png 2x,
+                            img/icon-dashboard-selected@3x.png 3x"
+                    class="icondashboard">
+                    <span class="menuSpan">
+                        대시보드
+                    </span>
+                </div>
+                
+                <div class = "notSelectedItem" onclick="location.href='./request.html'">
+                    <img src="img/icon-vp-list.png"
+                srcset="img/icon-vp-list@2x.png 2x,
+                        img/icon-vp-list@3x.png 3x"
+                class="iconVP-list-selected"  >
+                    <span style="margin-top:-10px;" class="menuSpan">
+                        요청 목록</span>
+                        <span id="requestNumber" style="float:right; color: #581cc8; margin : 10px 23px 0px 0px;"></span>
+                </div>
+                <div class = "rightSection ">
+                    <div class="Main-banner">
+                            <div class="Main-banner-right container">
+                                <img src="img/mainPicture.png" class="mainPicture ">
+                                <img src="img/mainPicture_menu.png" class="mainPicture ">
+                                <img src="img/mainPicture_menu.png" class="mainPicture ">
+                                <img src="img/mainPicture_menu.png" class="mainPicture ">
+                                <!-- mainPicture.png -->
+                            </div>
+                        <div class="Main-banner-left">
+                        <span class="Protocon-Verifier">
+                            Protocon Verifier
+                          </span>
+                          <span class="Protocon-Verifier-">
+                            Protocon Verifier는 고객의 신원, 멤버십 정보를 빠르게 확인합니다.<br> 정보를 수집하지 않기 때문에 이를 위한 약관 동의 절차가 없으며,<br> 고객 정보 유출에 대한 리스크 없이 비즈니스를 수행할 수 있습니다.
+                          </span>
+                          <span class="link">
+                            자세히 알아보기
+                          </span>
+                          <span class="link">
+                            Verifier 온라인 메뉴얼
+                          </span>
+                        </div>
+                    </div>
+                    <div class="Second-banner">
+
+                        <span class="info">
+                            사용자 정보 확인 처리 현황
+                          </span>
+                          <div class="subBanner">
+                            <span class="number">
+                                1
+                            </span>
+                            <span class="title">
+                                인증 요청 수<br>
+                                <span class="Subtitle" id="today">
+                                    2021년 10월 3일(일)
+                                </span>
+                            </span>
+                            <span class="Subtitle2" id = "requestNumber2"></span>
+                          </div>
+                          <div class="subBanner">
+
+                            <span class="number">
+                                2
+                            </span>
+                            <span class="title">
+                                미확인 사용자 수<br>
+                                <span class="Subtitle" id="today2">
+                                    2021년 10월 3일(일)
+                                </span>
+                            </span>
+                            <span class="Subtitle2">
+                                1
+                            </span>
+                          </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </body>
+</html>

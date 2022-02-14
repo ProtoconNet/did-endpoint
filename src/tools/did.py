@@ -8,26 +8,39 @@ import string
 import json
 import jwt
 import uuid
+import datetime
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, PublicFormat, NoEncryption
 
+_SCHEMAS = dict()
+_CREDENTIAL_DEFINITIONS = dict()
 _CREDENTIAL_SUBJECTS = dict()
-_VCSCHEME ={"driverLicense" : "vc1"}
+_UUID_STATUS = dict()
 
 def makeVC(vc):
-    if verifyVC(vc):
+    if verifiedVC(vc):
         return vc
     else:
         return None
 
+def getTime():
+    return str(datetime.datetime.utcnow().isoformat())
+
+def isExpired(expire):
+    now = getTime()
+    return expire < now
+    
 #Todo
-def verifyVC(vc):
+def verifiedVC(vc):
     return True
 
-def getUUID():
+def genUUID():
     return str(uuid.uuid4())
 
-def signString(string, privateKey):
+def signString(string, privateKeyB58):
     try:
-        signing_key = ed25519.SigningKey(base58.b58decode(privateKey))
+        signing_key = ed25519.SigningKey(base58.b58decode(privateKeyB58))
         sig = signing_key.sign(string.encode("utf8"), encoding=None)
         sig_base58 = base58.b58encode(sig)
         sig_decoded = sig_base58.decode("utf-8")
@@ -58,42 +71,172 @@ def saveCredentialSubject(uuid, credentialSubject):
     except Exception:
         return False
 
-def getCredentialSubject(uuid):
+def saveUUIDStatus(uuid, status):
+    try:
+        _UUID_STATUS[uuid] = status
+        return True
+    except Exception:
+        return False
+
+def saveSchema(schemaID, schema):
+    try:
+        _SCHEMAS[schemaID] = schema
+        return True
+    except Exception:
+        return False
+
+
+def saveCredentialDefinition(credentialDefinitionId, credentialDefinition):
+    try:
+        _CREDENTIAL_DEFINITIONS[credentialDefinitionId] = credentialDefinition
+        return True
+    except Exception:
+        return False
+
+def loadUUIDStatus(uuid):
+    try:
+        return _UUID_STATUS[uuid]
+    except Exception:
+        return False
+
+def deleteUUIDStatus(uuid):
+    try:
+        del _UUID_STATUS[uuid]
+        return True
+    except Exception:
+        return False
+
+def loadCredentialSubject(uuid):
     try:
         credentialSubject = _CREDENTIAL_SUBJECTS[uuid]
         return credentialSubject
     except Exception:
         return None
 
-def makeJWS(vc, privateKey):
+def loadSchema(schemaID):
+    try:
+        schema = _SCHEMAS[schemaID]
+        return schema
+    except Exception:
+        return None
+
+def loadAttributes(did, schemaID, credDefID):
+    schema = loadSchema(schemaID)
+    credDef = loadCredentialDefinition(credDefID)
+    #TODO 이 정보를 토대로 DID에 해당하는 정보들을 채워서 전달 해 주어야 한다.
+    # 현재는 샘플로 진행한다.
+
+def loadCredentialDefinition(credentialDefinitionId):
+    try:
+        credentialDefinition = _CREDENTIAL_DEFINITIONS[credentialDefinitionId]
+        return credentialDefinition
+    except Exception:
+        return None
+
+def makeJWS(jsonBody, privateKeyB58):
     try :
-        headerJSON = {"alg":"RS256","b64":False,"crit":["b64"]}
+        headerJSON = {"alg":"EdDSA","b64":False,"crit":["b64"]}
         header_base64 = base64.urlsafe_b64encode(json.dumps(headerJSON).encode('utf8'))
         header_ = header_base64.decode('utf8').rstrip("=")
-        vcString = json.dumps(vc)
-        sig_decoded = signString(vcString, privateKey)
+        bodyString = json.dumps(jsonBody)
+        sig_decoded = signString(bodyString, privateKeyB58)
         sig_base64 = base64.urlsafe_b64encode(base58.b58decode(sig_decoded))
         sig_ = sig_base64.decode('utf8').rstrip("=")
         return header_ + ".." + sig_
     except Exception:
         return None
 
+def makeJWS_jwtlib(body,privateKeyB58):
+    try:
+        privatekeyOBJ = Ed25519PrivateKey.from_private_bytes(base58.b58decode(privateKeyB58))
+        privatekeyPEM = privatekeyOBJ.private_bytes(encoding=Encoding.PEM, format=PrivateFormat.PKCS8, encryption_algorithm=NoEncryption()) 
+        encoded = jwt.encode(body, privatekeyPEM, algorithm="EdDSA")
+        jwsArr = encoded.split(".")
+        header = jwsArr[0]
+        body = jwsArr[1]
+        signature = jwsArr[2]
+        jws = header + ".." + signature
+    except Exception as ex:
+        print(ex)
+        print("YOU SHOULD INSTALL pyjwt >= 2.0.0 for EdDSA. 'pip install pyjwt==2'")
+        raise ex
+    return jws
+
+def getDIDFromVC(vc):
+    return vc['issuer']
+
+def getVCSFromVP(vp):
+    return vp['verifiableCredential']
+
+def verifyVC(vc, publicKeyB58):
+    jws = vc['proof'].pop('jws') # !!proof is OBJECT!!
+    dumpedVP = json.dumps(vc, separators=(',', ':')).encode('utf8')
+    dumpedVPB64 = base64.urlsafe_b64encode(dumpedVP)
+    dumpedVPB64decoded = dumpedVPB64.decode("utf-8").rstrip("=")
+    vc['proof']['jws'] = jws
+    if isExpired(vc['expirationDate']):
+        raise Exception("FAIL - verifyVC - VC has already expired.")
+    else :
+        print("[DID] VC is not expired")
+        return verifyJWS(jws, dumpedVPB64decoded, publicKeyB58)
+
+def verifyVP(vp, publicKeyB58):
+    #1. VERIFY HOLDER
+    jws = vp['proof'][0].pop('jws') # !!proof is ARRAY!!
+    dumpedVP = json.dumps(vp, separators=(',', ':')).encode('utf8')
+    dumpedVPB64 = base64.urlsafe_b64encode(dumpedVP)
+    dumpedVPB64decoded = dumpedVPB64.decode("utf-8").rstrip("=")
+    vpExpire = vp['proof'][0]['expire']
+    vp['proof'][0]['jws'] = jws
+    if isExpired(vpExpire):
+        raise Exception("FAIL - verifyVP - VP has already expired.")
+    else :
+        print("[DID] VP is not expired")
+        return verifyJWS(jws, dumpedVPB64decoded, publicKeyB58)
+
+def verifyJWS(jws, bodyB64, publicKeyB58):
+    try:
+        publicKeyOBJ = Ed25519PublicKey.from_public_bytes(base58.b58decode(publicKeyB58))
+        publickeySSH = publicKeyOBJ.public_bytes(encoding=Encoding.OpenSSH, format=PublicFormat.OpenSSH) 
+    except Exception as ex:
+        print(ex)
+        raise Exception("FAIL - verifyJWS - KEY PROBLEM")
+    try:
+        jwsArr = jws.split(".")
+        header = jwsArr[0]
+        tmpBody = jwsArr[1]
+        signature = jwsArr[2]
+        if tmpBody == '':
+            body = bodyB64
+        else :
+            body = tmpBody
+        restructuredJWS = header + "." + body + "." + signature
+    except Exception as ex:
+        print(ex)
+        raise Exception("FAIL - verifyJWS - Split and Restructure")
+    try : 
+        decoded = jwt.decode(restructuredJWS, publickeySSH, algorithms="EdDSA")
+    except Exception as ex:
+        print(ex)
+        raise Exception("FAIL - verifyJWS - EN/DECRYPT PROBLEM")
+    return decoded
+
 def getVerifiedJWT(request, secret):
     try :
         encoded_jwt = request.headers.get('Authorization')
     except Exception:
-        return "NO Authorization"
+        raise "NO Authorization"
     try :
         encoded_jwt = encoded_jwt.split(" ")[1] # FROM Bearer
     except Exception:
-        return "NO Bearer : " + str(encoded_jwt)
+        raise "NO Bearer : " + str(encoded_jwt)
     try :
         decoded_jwt = jwt.decode(encoded_jwt, secret, algorithms=["HS256"])
         return decoded_jwt
-    except Exception:
-        return "JWT verify failed"
+    except :
+        raise "JWT verify failed. Maybe It is caused by undefined jwt"
 
-def getPubkeyFromDIDDocument(did, documentURL):
+def getPubkeyFromDIDDocument(documentURL):
     try:
         did_req = requests.get(documentURL) 
         pubkey = json.loads(json.loads(did_req.text)['data'])['verificationMethod'][0]['publicKeyBase58']
@@ -102,6 +245,3 @@ def getPubkeyFromDIDDocument(did, documentURL):
     except Exception:
         pubkey = None
     return pubkey
-
-def getVCScheme(scheme):
-    return _VCSCHEME[scheme]
