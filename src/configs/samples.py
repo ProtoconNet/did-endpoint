@@ -18,7 +18,7 @@ ROLE = {
         "privateKey_SSH" : "TODO",
         "publicKey" : "3rfrZgGZHXpjiGr1m3SKAbZSktYudfJCBsoJm4m1XUgp",
         "secret" : "ExsNKhvF3pqwDvFaVaiQnWWdyeVwxd",
-        "host" : "mtm.securekim.com",
+        "host" : "mtm.securekim.com", #change it
         "port" : 3333,
         "challenge" : "_THISISHARDCODEDCHALLENGEFORTEST",
         "urls" : {
@@ -39,7 +39,7 @@ ROLE = {
         }
     },
     "verifier" :{
-        "host" : "mtm.securekim.com",
+        "host" : "mtm.securekim.com", #change it
         "port" : 3082,
         "secret" : "securekim",
         "webPort" : 8080,
